@@ -1,0 +1,24 @@
+# GitHub Pages configuration.
+#
+# The site is rendered from the Markdown already in this repository - README.md
+# becomes the homepage and docs/*.md become sub-pages. No content is duplicated.
+#
+# These GitHub Pages plugins are enabled by default and do the work:
+#   jekyll-readme-index        - renders README.md as the site index
+#   jekyll-relative-links      - rewrites links like docs/foo.md to docs/foo.html
+#   jekyll-optional-front-matter - processes .md files that have no front matter
+#   jekyll-seo-tag             - emits title/description/canonical/OpenGraph tags
+
+title: FreeX Thermal Printer on Apple Silicon Mac
+description: >-
+  Fix "Filter failed" and "The printer software is not compatible with this
+  device" for FreeX and other thermal label printers on Apple Silicon Macs
+  (M1, M2, M3, M4) by installing Rosetta 2.
+
+theme: jekyll-theme-cayman
+lang: en
+
+exclude:
+  - scripts/
+  - LICENSE
+  - llms.txt

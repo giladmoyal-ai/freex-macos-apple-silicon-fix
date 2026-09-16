@@ -1,0 +1,127 @@
+<!--
+  Injected into <head> by the Cayman theme's default layout.
+
+  Structured data describing the guide and its FAQ. Note: since 2023 Google has
+  limited FAQ rich results to authoritative government and health sites, so this
+  is unlikely to produce visual rich snippets. It is included because it makes
+  the page machine-readable for search engines and AI tools that parse
+  schema.org data.
+-->
+<meta name="author" content="freex-macos-apple-silicon-fix contributors">
+<meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "TechArticle",
+      "headline": "Fix \"Filter failed\" and \"The printer software is not compatible with this device\" for FreeX thermal printers on Apple Silicon Macs",
+      "description": "The FreeX macOS driver ships an Intel-only (x86_64) CUPS filter that Apple Silicon Macs cannot execute without Rosetta 2. Installing Rosetta 2 and recreating the printer queue restores USB and Wi-Fi printing.",
+      "keywords": "FreeX thermal printer, Apple Silicon, M1, M2, M3, M4, Filter failed, Rosetta 2, CUPS filter, rastertoFreeX, 4x6 shipping labels, macOS printing",
+      "articleSection": "Troubleshooting",
+      "proficiencyLevel": "Beginner",
+      "license": "https://opensource.org/licenses/MIT"
+    },
+    {
+      "@type": "HowTo",
+      "name": "Fix a FreeX thermal printer that will not print on an Apple Silicon Mac",
+      "totalTime": "PT5M",
+      "tool": [
+        { "@type": "HowToTool", "name": "Terminal (included with macOS)" }
+      ],
+      "step": [
+        {
+          "@type": "HowToStep",
+          "name": "Install the FreeX driver",
+          "text": "Install the current FreeX Mac driver and WiFi Toolbox from the official FreeX download page."
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Install Rosetta 2",
+          "text": "Open Terminal and run: softwareupdate --install-rosetta. Accept the licence when prompted. This takes under a minute and requires no restart."
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Recreate the printer queue",
+          "text": "In System Settings > Printers & Scanners, remove the FreeX printer, then add it again. Under Use, choose Select Software and pick FreeX WiFi Thermal Printer rather than a generic driver."
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Print a test label",
+          "text": "Print a label from any application. USB and Wi-Fi printing should both work."
+        }
+      ]
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Why won't my FreeX printer print from my Mac?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The FreeX driver is Intel-only software and your Mac has an Apple Silicon chip (M1, M2, M3 or M4). It cannot run that software until you install Rosetta 2. Run softwareupdate --install-rosetta, then delete and re-add the printer. The printer itself is not faulty."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What does \"Filter failed\" mean on macOS?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "CUPS prepared your document but could not run the printer manufacturer's conversion program, called a filter. On Apple Silicon Macs this usually means the filter is an Intel-only binary and Rosetta 2 is not installed. It is a software failure on your Mac, not a printer, cable or network failure."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What does \"The printer software is not compatible with this device\" mean?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Despite the wording, \"this device\" means your Mac, not your printer. macOS is reporting that the driver cannot run on this computer's processor because the driver is Intel-only and the Mac is Apple Silicon. Installing Rosetta 2 resolves it."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Will reinstalling the printer driver fix \"Filter failed\"?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. The downloaded driver is not corrupt. It is Intel software, and reinstalling it simply puts the same Intel software back. Install Rosetta 2 instead."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Why does my label printer work on Windows but not on my Mac?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The Windows and Mac drivers are entirely separate programs. The Mac driver was built for Intel Macs and never rebuilt for Apple Silicon, so your Mac cannot run it without Rosetta 2."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is Rosetta 2 safe to install?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. It is an official Apple component installed from Apple's servers using Apple's own softwareupdate command. It does not modify your files, settings or apps, and requires no restart."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I check whether a printer driver is Intel-only?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Run: file /usr/libexec/cups/filter/* — any filter reported as x86_64 without also reporting arm64 is Intel-only and requires Rosetta 2."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is Rosetta 2 going away?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. macOS 27 is the last release with full Rosetta 2 support. From macOS 28 it is limited to legacy game frameworks, so Intel-only printer drivers will stop working entirely and a native arm64 driver or a driverless path such as AirPrint will be required."
+          }
+        }
+      ]
+    }
+  ]
+}
+</script>

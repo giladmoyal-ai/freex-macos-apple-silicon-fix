@@ -60,6 +60,7 @@ FreeX; the diagnosis and fix are vendor-neutral. See [Other printers](docs/other
 - [FAQ](#faq)
 - [Technical notes](#technical-notes)
 - [How this guide was verified](#how-this-guide-was-verified)
+- [Questions and help](#questions-and-help)
 - [Disclaimer](#disclaimer)
 
 ---
@@ -959,6 +960,31 @@ Apple Silicon.
 It also documents an **experimental** direct-to-port-9100 approach explored before the real cause was
 found. **That is not a recommended solution** — once Rosetta 2 is installed the official driver works
 normally and there's no reason to bypass it.
+
+---
+
+## Questions and help
+
+**[Ask a question in Discussions →](https://github.com/giladmoyal-ai/freex-macos-apple-silicon-fix/discussions/categories/q-a)**
+
+If this guide didn't solve it, or your printer behaves differently, ask there rather than guessing.
+Questions get marked with an accepted answer, so the next person with the same problem finds it
+straight away.
+
+Useful to include:
+
+- Your printer make and model
+- `sw_vers` and `uname -m` output
+- The output of `file /usr/libexec/cups/filter/*` (or the diagnostic script)
+- What you've already tried
+
+**[Did this fix your printer? Let us know →](https://github.com/giladmoyal-ai/freex-macos-apple-silicon-fix/discussions)**
+Reports from **non-FreeX printers are especially welcome** — they help confirm how widely this
+applies.
+
+> **Please don't post private information.** No Wi-Fi names or passwords, no local IP addresses, no
+> printer serial numbers, no shipping labels, no customer or order data. Use placeholders like
+> `YOUR_WIFI_NAME` and `192.168.1.100`, and redact screenshots before uploading them.
 
 ---
 

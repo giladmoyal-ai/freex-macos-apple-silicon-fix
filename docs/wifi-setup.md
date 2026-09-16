@@ -98,6 +98,72 @@ You can now unplug USB if you want, though leaving it connected does no harm.
 
 ---
 
+## How to find your printer's IP address
+
+You need this to add the printer over Wi-Fi. Three ways, easiest first.
+
+### 1. Restart the printer and read the label it prints
+
+**This is the simplest method and needs no technical knowledge.**
+
+1. Switch the printer **off** with its power switch
+2. Wait about 5 seconds
+3. Switch it back **on**
+4. Wait 1–2 minutes
+
+Once it connects to Wi-Fi the printer beeps and prints a small **configuration
+label** by itself. It looks roughly like this:
+
+```
+[WIFI Configure]
+IP........192.168.1.100
+SSID......YOUR_WIFI_NAME
+Port......9100
+```
+
+The number next to **IP** is what you type into macOS. Write it down, or keep
+the label.
+
+> Nothing printed? Then the printer hasn't joined your Wi-Fi yet — go back to
+> [Step 1](#step-1--configure-wi-fi-in-the-freex-toolbox). Also check labels are
+> loaded and the cover is fully closed; a printer that can't print can't tell
+> you its address.
+
+### 2. Ask the FreeX Toolbox
+
+Connect the printer by **USB**, open the **FreeX WiFi Toolbox**, then
+**FreeX Setup → Ethernet**. The IP is shown there.
+
+### 3. Look in your router's app
+
+Open your router's phone app or admin page and find the list of connected
+devices. The printer usually appears with a name like `FreeX`, `RT-Label`, or an
+unfamiliar device on Wi-Fi. Its IP address is listed beside it.
+
+If several devices look similar, match the **MAC address** shown in the Toolbox
+against the one in your router.
+
+### Already added the printer on a Mac?
+
+If it worked before and you just need the address again, open Terminal and run:
+
+```bash
+lpstat -v
+```
+
+Look for the line naming your FreeX printer — the address is in it, like
+`socket://192.168.1.100:9100`.
+
+### The address keeps changing
+
+Most routers hand out addresses temporarily (DHCP), so the printer's IP can
+change after a power cut or router restart — and then macOS can no longer find
+it. The permanent fix is a **DHCP reservation**: in your router's app, find the
+printer and choose "reserve this IP" (wording varies). Leave DHCP **enabled on
+the printer** and let the router pin the address.
+
+---
+
 ## Step 4 — Test connectivity from the Mac
 
 Replace `192.168.1.100` with the IP from the configuration label:

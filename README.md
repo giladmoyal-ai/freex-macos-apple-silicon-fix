@@ -665,6 +665,10 @@ It prints a small configuration label showing its IP address, the network it joi
 > **These printers are 2.4 GHz only.** If your router broadcasts one merged name for 2.4 GHz and
 > 5 GHz, that is the most common reason setup fails.
 
+**Don't know your printer's IP?** The easiest way: switch the printer off, wait 5 seconds, switch it
+on, and wait a minute — it prints a small label showing its IP, network name and port. Full details
+and two other methods: [How to find your printer's IP address](docs/wifi-setup.md#how-to-find-your-printers-ip-address).
+
 Confirm the Mac can reach it (use your printer's real IP):
 
 ```bash

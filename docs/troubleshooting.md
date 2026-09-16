@@ -23,6 +23,7 @@ bash scripts/diagnose_freex_macos.sh --all
 - [I reinstalled the driver several times and nothing changed](#i-reinstalled-the-driver-several-times-and-nothing-changed)
 - [The printer is reachable on the network but nothing prints](#the-printer-is-reachable-on-the-network-but-nothing-prints)
 - [My Wi-Fi queue stopped working](#my-wi-fi-queue-stopped-working)
+- [The printer got an address on a completely different network](#the-printer-got-an-address-on-a-completely-different-network)
 - [The queue I made before installing Rosetta still errors](#the-queue-i-made-before-installing-rosetta-still-errors)
 - [Labels print at the wrong size or on a huge blank page](#labels-print-at-the-wrong-size-or-on-a-huge-blank-page)
 - [Labels print at a different size or with different borders every time](#labels-print-at-a-different-size-or-with-different-borders-every-time)
@@ -199,6 +200,77 @@ Also check:
 - The router moved it to a different band or a guest network. Most of these printers are
   **2.4 GHz only**
 - You changed your Wi-Fi name or password — reconfigure via the vendor Toolbox over USB
+
+---
+
+## The printer got an address on a completely different network
+
+You restart the printer, it prints its config label, and the IP is on a subnet
+that isn't yours — your Mac is on `192.168.1.x` but the label says
+`192.168.3.42`. Printing fails with **"The printer may not exist or is
+unavailable at this time"**.
+
+This is not a DHCP lease change. **Something other than your router handed the
+printer an address.**
+
+### The usual culprit: macOS Internet Sharing
+
+If **System Settings → General → Sharing → Internet Sharing** is switched on,
+your Mac runs its own DHCP server (`bootpd`) and hands out addresses on its own
+private subnet — typically `192.168.2.x` or `192.168.3.x` — over whatever
+interfaces it is sharing to.
+
+If any of those interfaces reaches the rest of your network — a dock's Ethernet
+port into a switch, especially with a mesh node or access point plugged into that
+switch — then devices joining your normal Wi-Fi can end up leased an address by
+**your Mac** instead of your router.
+
+The printer then sits on a network your router knows nothing about. Crucially,
+**a DHCP reservation cannot fix this**, because your router never assigned the
+address in the first place.
+
+### How to confirm it
+
+```bash
+# Is the Mac running a DHCP server and sharing?
+pgrep -l InternetSharing bootpd
+
+# Bridge interfaces created by Internet Sharing, and their subnets
+ifconfig | grep -A3 '^bridge' | grep -E '^bridge|inet '
+
+# Which devices has the Mac leased addresses to?
+cat /var/db/dhcpd_leases
+```
+
+If the printer's address appears in `dhcpd_leases`, your Mac gave it that
+address. A wired interface showing a self-assigned `169.254.x.x` is another
+strong hint — that happens when the Mac is acting as the DHCP *server* on a
+segment rather than a client of it.
+
+### The fix
+
+1. **Check what depends on it first.** `cat /var/db/dhcpd_leases` lists every
+   device your Mac is serving. Turning sharing off will move them all back to
+   your router, which is correct, but some IoT devices need a power-cycle to
+   notice.
+2. Turn **Internet Sharing off**.
+3. Wait a couple of minutes, then confirm any wired interface picks up a normal
+   address from your router instead of `169.254.x.x`.
+4. **Restart the printer.** Its config label should now show an address on your
+   real network.
+5. Only then create the [DHCP reservation](wifi-setup.md#stop-the-ip-address-from-changing)
+   on your router.
+6. Point the queue at the new address:
+   ```bash
+   sudo lpadmin -p <QUEUE> -v socket://NEW_IP
+   ```
+
+### If you genuinely need Internet Sharing
+
+Don't share to an interface that reaches the rest of your network. Sharing to a
+port with a single isolated device on it is fine; sharing to a port that leads to
+a switch carrying your normal network puts a second DHCP server on that network,
+and which one answers a given device is a race.
 
 ---
 

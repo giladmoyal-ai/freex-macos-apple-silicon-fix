@@ -907,6 +907,7 @@ labels and print-head cleaning, see **[docs/print-quality.md](docs/print-quality
 | `nc -vz IP 9100` succeeds but nothing prints | Network is fine; the filter is failing | It's the Rosetta problem, not a network problem |
 | Reinstalled the driver repeatedly, no change | Reinstalling an Intel binary yields an Intel binary | Install Rosetta |
 | USB queue still errors after installing Rosetta | Stale queue created pre-Rosetta | Remove the printer, add it again |
+| Printer's IP is on a **different subnet** than your Mac | Something other than your router is handing out addresses — often macOS **Internet Sharing** | [Find the rogue DHCP server](docs/troubleshooting.md#the-printer-got-an-address-on-a-completely-different-network) — a router reservation cannot fix this |
 | Worked yesterday, dead today (Wi-Fi) | DHCP gave the printer a new IP | [Reserve the printer's IP on your router](docs/wifi-setup.md#stop-the-ip-address-from-changing) — the most common delayed failure |
 | Labels tiny, shifted, or on a huge blank page | App defaulted to Letter | Use a saved 4x6 preset |
 | Streaks, smearing, faded or blurry labels | Dirty print head or platen roller | [Clean the printer](docs/print-quality.md) — usually five minutes with a cotton swab |

@@ -24,6 +24,24 @@ in five minutes with a cotton swab.
 
 ---
 
+## Know what you're looking at
+
+Open the cover and you'll see the two parts that matter. Everything on this page
+is about keeping these two clean:
+
+![FreeX thermal printer with the cover open, showing the print head on the underside of the lid and the black rubber platen roller in the base](images/printer-open-overview.jpg)
+
+- The **print head** is on the underside of the lid — a thin strip that runs the
+  full width of the paper path. It applies the heat that darkens the label.
+- The **platen roller** is the black rubber cylinder in the base. It presses the
+  label against the head and pulls it through.
+
+FreeX puts a sticker right on the print head assembly saying *"Suggest to clear
+print head and rubber roller weekly."* They are not being cautious — these are
+the two wear parts, and the ones that make print quality fall off.
+
+---
+
 ## How to clean the print head
 
 The single highest-value maintenance task. Do it every roll or two, or any time
@@ -46,6 +64,12 @@ quality drops.
 5. Dampen the swab with alcohol — **damp, not dripping**.
 6. Wipe **gently along the strip**, end to end, in one direction. Repeat with a
    clean swab until nothing more comes off.
+
+![Close-up of the FreeX print head, a silver strip below the serrated tear-off bar, marked as the surface to wipe](images/print-head-closeup.jpg)
+
+> **Wipe the silver strip, not the serrated bar above it.** That saw-toothed edge
+> is the tear-off blade — it needs no cleaning. The print head is the smooth
+> metallic line just below it, where the label actually passes.
 7. **Let it dry completely** — at least a minute. Closing it wet can damage the
    head.
 8. Reload the roll, close the cover firmly on **both** sides, power on.
@@ -70,6 +94,12 @@ smearing, patchiness and slipping.
 3. Wipe the roller while **rotating it slowly with your finger**, so you clean
    the whole circumference — not just the strip facing you
 4. Let it dry fully before reloading
+
+![The black rubber platen roller in the base of the printer, marked to rotate it while wiping](images/platen-roller.jpg)
+
+Only about a third of the roller faces you at a time. If you wipe without turning
+it, you leave two thirds dirty — and the smearing comes straight back on the next
+label.
 
 If the roller is visibly shiny, grooved, or has flat spots, it is worn and needs
 replacing — cleaning will not bring it back.

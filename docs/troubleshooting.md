@@ -422,9 +422,20 @@ softwareupdate --install-rosetta
 Harmless if it's already installed.
 
 **2. You upgraded to macOS 28 or later.** From macOS 28, Rosetta 2 no longer covers general-purpose
-Intel binaries, including printer drivers, so Intel-only drivers stop working permanently and cannot
-be rescued. You need a native arm64 driver from the vendor, a generic driver for your printer's
-language, or a driverless path such as AirPrint / IPP Everywhere. See
+Intel binaries, including printer drivers, so reinstalling the vendor driver will not help.
+
+**For FreeX printers there is a direct fix:** install the
+[native replacement filter](../native-filter/) from this repository. It is a script, so it has no CPU
+architecture and does not need Rosetta at all. It installs alongside the vendor driver without
+removing it:
+
+```bash
+cd native-filter && sudo bash install.sh
+```
+
+Then re-add the printer choosing **FreeX WiFi Thermal Printer (Native)**.
+
+For other makes of printer, see
 [other-printers.md](other-printers.md#if-there-is-no-working-driver-at-all).
 
 Check which case you're in:

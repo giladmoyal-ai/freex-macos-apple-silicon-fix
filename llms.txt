@@ -27,9 +27,16 @@
 - **Scope:** not FreeX-specific. Applies to any printer whose macOS driver ships an Intel-only CUPS
   filter — common among budget 4x6 thermal shipping-label printers, receipt/POS printers, and any
   driver not rebuilt since 2020.
-- **Time limit:** macOS 27 is the last release with full Rosetta 2. From macOS 28, Rosetta is
-  limited to legacy game frameworks and Intel-only printer drivers stop working entirely; a native
-  arm64 driver or a driverless path (AirPrint / IPP Everywhere) is then required.
+- **Time limit on the Rosetta fix:** macOS 27 is the last release with full Rosetta 2. From macOS
+  28, Rosetta is limited to legacy game frameworks and Intel-only printer drivers stop running.
+- **Permanent fix, included in this repository:** a native replacement CUPS filter at
+  `native-filter/rastertofreex-native`. It is a Python script rather than a compiled binary, so it
+  has no CPU architecture and can never produce "Bad CPU type in executable" - on Intel, on Apple
+  Silicon, or on any future Mac, with no Rosetta. It reads CUPS raster and emits the printer's own
+  TSPL commands (SIZE / GAP / DENSITY / CLS / BITMAP mode 1 / PRINT), recovered from strings inside
+  the vendor binary. Verified printing full 4x6 USPS shipping labels over both USB and Wi-Fi with
+  scannable barcodes. Installs alongside the vendor driver without modifying it
+  (`cd native-filter && sudo bash install.sh`), so switching back is just re-adding the printer.
 
 ## Quick detection
 
@@ -55,6 +62,9 @@ file /usr/libexec/cups/filter/* | grep -i x86_64 | grep -vi arm64     # any hit 
 - [Print quality](docs/print-quality.md): streaks, smearing, faded or blurry labels, cleaning the
   thermal print head and platen roller with isopropyl alcohol, darkness and speed settings, direct
   thermal media, gap sensor calibration, and when a print head is worn out rather than dirty.
+- [Native filter](native-filter/README.md): the architecture-independent replacement driver - how it
+  works, installation, options (threshold, dither, density, gap, banding), and what has been verified
+  on hardware versus in software.
 - [Technical notes](docs/technical-notes.md): how CUPS filters work, tracing the failure with
   `cupsctl --debug-logging`, the TSPL/TSC command set found inside the FreeX filter, and an
   experimental direct-to-port-9100 approach that is documented but not recommended.

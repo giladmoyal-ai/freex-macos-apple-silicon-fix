@@ -136,13 +136,33 @@ Some print nothing and exit — that's also fine, as long as you don't see `Bad 
 Rosetta 2 only helps while the vendor's Intel driver exists and you're on macOS 27 or earlier. If
 the vendor is gone, never shipped a Mac driver, or you're on macOS 28+, consider these in order.
 
-### 1. Ask the vendor for a native arm64 driver
+### 1. For FreeX printers: use the native filter in this repository
+
+If your printer is a FreeX, this is solved. This repository ships
+**[a native replacement CUPS filter](../native-filter/)** — a script, so it has no CPU architecture
+and can never fail with `Bad CPU type in executable`. No Rosetta, on any macOS version.
+
+```bash
+cd native-filter && sudo bash install.sh
+```
+
+Then add the printer choosing **FreeX WiFi Thermal Printer (Native)**. It installs alongside the
+vendor driver without removing it. Verified printing full 4x6 USPS labels over USB and Wi-Fi.
+
+**For other brands**, the same approach works but needs adapting: the filter converts CUPS raster to
+**TSPL**. If your printer speaks TSPL too (many rebadged thermal label printers do), it may work with
+little or no change — the page size and `GAP` values are the usual adjustments. If it speaks ZPL,
+EPL or ESC/POS, the raster-packing logic carries over but the command names differ. The source is
+short, commented, and MIT licensed. Reports of it working on other models are very welcome in
+[Discussions](https://github.com/giladmoyal-ai/freex-macos-apple-silicon-fix/discussions).
+
+### 2. Ask the vendor for a native arm64 driver
 
 Worth doing even if you expect nothing. Vendor pressure is the only reliable way these get rebuilt,
 and the request is concrete: *"Please provide a universal or arm64 build of your CUPS filter — the
 current one is x86_64 only and will stop working on macOS 28."*
 
-### 2. Try a generic driver for the printer's language
+### 3. Try a generic driver for the printer's language
 
 Many thermal printers speak a standard language. If yours does, a generic driver may work with no
 vendor software at all:
@@ -162,19 +182,22 @@ filter — see [technical-notes.md](technical-notes.md) for a worked example.
 > **Generic PostScript and Generic PCL do not work for thermal label printers.** They're a common
 > accidental choice in the Add Printer dialog and produce "Filter failed" or pages of garbage.
 
-### 3. Print directly to port 9100
+### 4. Print directly to port 9100
 
 Most network thermal printers accept raw commands on TCP port 9100 with no driver involved. This is
-powerful but low-level — you become responsible for rasterizing and formatting. See the
-**experimental** section of [technical-notes.md](technical-notes.md).
+powerful but low-level — you become responsible for rasterizing and formatting.
 
-### 4. Check for AirPrint / IPP Everywhere
+For FreeX this is no longer necessary: the [native filter](../native-filter/) does exactly this, but
+properly integrated with CUPS so ⌘P works normally. See
+[technical-notes.md](technical-notes.md) for how the protocol was worked out.
+
+### 5. Check for AirPrint / IPP Everywhere
 
 Some network printers support driverless printing even when the vendor also ships a driver. If macOS
 offers your printer with **"Use: AirPrint"** or **"Secure AirPrint"** in the Add Printer dialog,
 select that — it bypasses vendor filters entirely and will keep working after macOS 28.
 
-### 5. Print from another machine
+### 6. Print from another machine
 
 An Intel Mac, a Linux box, a Raspberry Pi, or a Windows PC can host the printer and share it on the
 network. CUPS on Linux often has community drivers for exactly these printers.
@@ -187,8 +210,10 @@ macOS 27 is the last release with full Rosetta 2. From macOS 28, Intel-only driv
 Rosetta cannot rescue them.
 
 **Before upgrading**, run the diagnostic script. If it still reports an Intel-only filter for a
-printer you depend on, that printer will stop working on upgrade. Decide in advance whether you'll
-get a native driver, switch to a driverless path, or delay the upgrade.
+printer you depend on, that printer will stop working on upgrade.
+
+For FreeX printers, install the [native filter](../native-filter/) and the problem goes away
+permanently — it is a script, so no future macOS can reject it on architecture grounds.
 
 ---
 

@@ -117,11 +117,15 @@ if [ "$APPLE_SILICON" -eq 1 ]; then
     # Rosetta 2 is fully supported only through macOS 27.
     if [ "$OS_MAJOR" -ge 28 ] 2>/dev/null; then
         warn "macOS $OS_MAJOR: Rosetta 2 no longer covers general-purpose Intel binaries."
-        plain "Intel-only printer drivers cannot be rescued by Rosetta on this release."
-        plain "You need a native arm64 driver from the vendor, or a driverless path."
+        plain "Rosetta cannot rescue an Intel-only printer driver on this release."
+        plain "Use the native replacement filter shipped with this project instead:"
+        plain "  https://github.com/giladmoyal-AI/freex-macos-apple-silicon-fix/tree/main/native-filter"
+        plain "It is a script, so it has no CPU architecture and needs no Rosetta."
     elif [ "$OS_MAJOR" -ge 26 ] 2>/dev/null; then
         info "Note: macOS 27 is the last release with full Rosetta 2 support."
-        plain "From macOS 28, Intel-only printer drivers stop working entirely."
+        plain "From macOS 28, Intel-only printer drivers stop running. This project"
+        plain "ships a native replacement filter that has no CPU architecture:"
+        plain "  https://github.com/giladmoyal-AI/freex-macos-apple-silicon-fix/tree/main/native-filter"
     fi
 else
     info "Not applicable on this architecture."
@@ -308,8 +312,10 @@ elif [ "$APPLE_SILICON" -eq 1 ] && [ "$INTEL_ONLY_COUNT" -gt 0 ] && [ "$ROSETTA_
     plain "       nc -vz YOUR_PRINTER_IP 9100"
     plain "  5. Re-run this script with --log to see recent CUPS errors."
     plain ""
-    plain "Plan ahead: these drivers stop working from macOS 28. Ask your vendor"
-    plain "for a native Apple Silicon (arm64) driver."
+    plain "Plan ahead: these drivers stop working from macOS 28. Either ask your"
+    plain "vendor for a native arm64 driver, or install the script-based filter"
+    plain "from this project, which has no CPU architecture at all:"
+    plain "  https://github.com/giladmoyal-AI/freex-macos-apple-silicon-fix/tree/main/native-filter"
 
 elif [ "$APPLE_SILICON" -eq 1 ] && [ "$INTEL_ONLY_COUNT" -eq 0 ] && [ "$FILTER_TOTAL" -eq 0 ]; then
     printf '  %s%sNO VENDOR DRIVER DETECTED%s\n\n' "$BOLD" "$YELLOW" "$RESET"

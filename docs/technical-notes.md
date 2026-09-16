@@ -241,9 +241,18 @@ cannot execute. The options become a native `arm64` build from the vendor, a gen
 printer's command language, driverless printing (AirPrint / IPP Everywhere), or talking to the
 printer directly on port 9100.
 
-Ironically, the direct-to-9100 experiment described above — dismissed as unnecessary once Rosetta
-solved the problem — is one of the few approaches that will still work on macOS 28. A small
-user-space program that rasterizes a PDF and emits TSPL needs no vendor filter and no Rosetta.
+The direct-to-9100 experiment described above — dismissed as unnecessary once Rosetta solved the
+immediate problem — turned out to point at the right answer after all. **That approach is now built,
+working, and shipped in this repository as [native-filter/](../native-filter/).**
+
+The difference between the failed experiment and the working filter is where the bytes are written.
+The experiment opened its own socket and wrote the raster by hand, and truncated at roughly 30–40% of
+a page no matter how it was banded or paced. The filter emits the same TSPL to **stdout** and lets
+**CUPS's own socket and USB backends** perform the transfer, with real flow control. Full pages print
+over both transports. The printer was never the limitation — the ad-hoc socket write was.
+
+Writing it as a **script** rather than a compiled binary is what makes it durable: a script has no
+CPU architecture, so it cannot be rejected by any future macOS the way `rastertoFreeX` is today.
 
 One detail worth noting: macOS ships its own `rastertoepson` filter as a **universal binary**, while
 the FreeX filter derived from it is Intel-only. The upstream code was never the constraint; only the

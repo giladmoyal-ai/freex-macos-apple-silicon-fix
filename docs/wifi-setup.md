@@ -364,6 +364,11 @@ Network setup is unaffected by Apple's Rosetta 2 retirement — port 9100 keeps 
 working from macOS 28 is the **Intel-only driver** that converts your document into printer
 commands.
 
+**The fix is already in this repository:** the
+[native replacement filter](../native-filter/) is a script with no CPU architecture, so it keeps
+working on macOS 28 and beyond. It drives the printer over Wi-Fi on port 9100 exactly as the vendor
+driver does — verified printing full 4x6 labels wirelessly.
+
 If you rely on this printer, check before upgrading:
 
 ```bash

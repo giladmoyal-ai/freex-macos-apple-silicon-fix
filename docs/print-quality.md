@@ -29,12 +29,13 @@ in five minutes with a cotton swab.
 Open the cover and you'll see the two parts that matter. Everything on this page
 is about keeping these two clean:
 
-![FreeX thermal printer with the cover open, showing the print head on the underside of the lid and the black rubber platen roller in the base](images/printer-open-overview.jpg)
+![FreeX thermal printer with the cover open, showing the black rubber platen roller in the base](images/printer-open-overview.jpg)
 
-- The **print head** is on the underside of the lid — a thin strip that runs the
-  full width of the paper path. It applies the heat that darkens the label.
-- The **platen roller** is the black rubber cylinder in the base. It presses the
-  label against the head and pulls it through.
+- The **platen roller** is the black rubber cylinder in the base — easy to spot,
+  marked above. It presses the label against the head and pulls it through.
+- The **print head** is on the **underside of the lid**, facing down. You cannot
+  see it from this angle, which is why it is not marked here — tilt the lid up
+  and look underneath, or see the close-up in the next section.
 
 FreeX puts a sticker right on the print head assembly saying *"Suggest to clear
 print head and rubber roller weekly."* They are not being cautious — these are

@@ -796,6 +796,13 @@ Some apps (Preview especially) override the queue default with US Letter anyway.
 
 Select `FreeX 4x6` from **Presets** whenever you print labels.
 
+> ⚠️ **Then uncheck one box, or the preset won't stick.** In
+> **Presets → Edit Preset List** there is an option called **"Reset Presets Menu to
+> 'Default Settings' After Printing"**. While it is ticked, macOS drops your preset after *every*
+> print and reverts to defaults — so the next label comes out wrong again. Uncheck it and macOS
+> remembers your preset per printer. See
+> [the full explanation](docs/troubleshooting.md#the-setting-that-silently-undoes-your-preset).
+
 ### Don't change the system-wide default
 
 System Settings has a global **Default paper size**. Leave it on Letter. Changing it makes every

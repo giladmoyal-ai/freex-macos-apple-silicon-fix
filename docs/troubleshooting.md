@@ -26,6 +26,7 @@ bash scripts/diagnose_freex_macos.sh --all
 - [The queue I made before installing Rosetta still errors](#the-queue-i-made-before-installing-rosetta-still-errors)
 - [Labels print at the wrong size or on a huge blank page](#labels-print-at-the-wrong-size-or-on-a-huge-blank-page)
 - [Labels print at a different size or with different borders every time](#labels-print-at-a-different-size-or-with-different-borders-every-time)
+  - [The setting that silently undoes your preset](#the-setting-that-silently-undoes-your-preset)
 - [Nothing prints and there's no error at all](#nothing-prints-and-theres-no-error-at-all)
 - [The printer pauses itself after every job](#the-printer-pauses-itself-after-every-job)
 - [Printing broke after a macOS upgrade](#printing-broke-after-a-macos-upgrade)
@@ -297,6 +298,25 @@ time.
 A preset saved earlier carries the old scale-up setting with it, so picking it
 brings the problem back. **Presets -> Edit Preset List** and delete any leftovers
 (`Job Preset`, `Job Preset 2`, and similar auto-generated names).
+
+### The setting that silently undoes your preset
+
+In **Presets -> Edit Preset List** there is a checkbox at the bottom:
+
+> **Reset Presets Menu to "Default Settings" After Printing**
+
+**Uncheck it.**
+
+When it is ticked, macOS discards your preset selection *after every print* and
+reverts the menu to "Default Settings". You select `FreeX 4x6`, print one perfect
+label, and the next job quietly falls back to Scale to Fit and whatever else the
+defaults carry.
+
+This is the single best explanation for "it worked once and then went back to
+printing wrong", and it is easy to miss because the preset itself is still
+saved — it just is not selected any more.
+
+With it unchecked, macOS remembers the last preset you used, per printer.
 
 ### Printing that cannot drift
 

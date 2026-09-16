@@ -710,35 +710,89 @@ queues.
 
 ## 4x6 label defaults
 
-Most 4x6 thermal drivers already default to the right size. Check yours:
+Tired of changing Paper Size on every print? Set it once.
+
+### Which 4x6 do you want?
+
+The FreeX driver offers **two** sizes that both look like "4x6" — they are not the same:
+
+| Option | Actual size | Use when |
+| --- | --- | --- |
+| `w288h432` | exactly **4.00 x 6.00 inches** | US shipping labels (USPS, UPS, FedEx, Amazon) |
+| `w283h425` | **100 x 150 mm** = 3.94 x 5.91 in | labels sold in metric sizes |
+
+The driver ships with **`w283h425`** as its default, so if you buy US 4x6 labels you are
+printing about 1.5% small unless you change it. Usually harmless, but it can shift a barcode
+near the edge.
+
+### Method 1 — set the queue default (recommended)
+
+This applies in every app, so you never touch Paper Size again.
+
+**Step 1: get the queue's internal name.** This is *not* the name you see in System Settings:
 
 ```bash
-lpstat -p                                      # list your queue names
+lpstat -p
+```
+
+You'll see something like `FreeX_Native_WiFi` — underscores, no spaces or brackets.
+
+> **This trips everyone up.** `lpoptions -p "FreeX Printer (WiFi)"` fails with
+> *"Unable to get PPD file"*. You must use the internal name from `lpstat -p`.
+
+**Step 2: see the available sizes** (the `*` marks the current default):
+
+```bash
 lpoptions -p YOUR_QUEUE_NAME -l | grep -i PageSize
 ```
 
+**Step 3: set it.**
+
+```bash
+lpoptions -p YOUR_QUEUE_NAME -o PageSize=w288h432      # true 4x6 inches
+# or
+lpoptions -p YOUR_QUEUE_NAME -o PageSize=w283h425      # 100 x 150 mm
 ```
-PageSize/Media Size: Custom.WIDTHxHEIGHT w283h283 w283h340 *w283h425 ...
+
+**Step 4: confirm.**
+
+```bash
+lpoptions -p YOUR_QUEUE_NAME | tr ' ' '\n' | grep -i pagesize
 ```
 
-The `*` marks the default. For FreeX, **`w283h425`** = 283 × 425 PostScript points = **100 × 150 mm**
-= a standard **4x6 shipping label**. The PPD lists it literally as `w283h425/100mmx150mm`.
+To apply it for **every user** on the Mac rather than just you:
 
-**But macOS apps still default to US Letter.** Preview in particular will happily open the print
-dialog on Letter and print a tiny, shifted, or clipped label. Fix it once with a preset:
+```bash
+sudo lpadmin -p YOUR_QUEUE_NAME -o PageSize=w288h432
+```
 
-1. Open a label, press **⌘P**
-2. **Printer** → your label printer
-3. **Paper Size** → the 4x6 / 100×150 mm entry
-4. **Scale** → 100%, or "Actual Size" where offered
-5. **Presets** → **Save Current Settings as Preset…**
-6. Name it e.g. `Label 4x6`
-7. If offered, choose **Only this printer** so it doesn't hijack your other printers
+Quit and reopen the app afterwards — print dialogs cache the old size.
 
-Select that preset whenever you print labels.
+### Method 2 — save a print preset
 
-Still wrong? Check the label file itself is genuinely 4x6 — a Letter-size PDF with a label in the
-corner prints exactly that way — and that **Scale to Fit** is off.
+Some apps (Preview especially) override the queue default with US Letter anyway. A preset wins:
+
+1. Open a label, press **Cmd+P**
+2. **Printer** -> your FreeX queue
+3. **Paper Size** -> the 4x6 / 100x150 mm entry
+4. **Scale** -> 100%, or **Scale to Fit -> Print Entire Image**
+5. **Presets** -> **Save Current Settings as Preset...**
+6. Name it `FreeX 4x6`
+7. Choose **Only this printer** if offered, so it doesn't hijack your other printers
+
+Select `FreeX 4x6` from **Presets** whenever you print labels.
+
+### Don't change the system-wide default
+
+System Settings has a global **Default paper size**. Leave it on Letter. Changing it makes every
+printer default to 4x6, which is rarely what you want. Set it per queue instead.
+
+### Still wrong?
+
+- The label file itself may not be 4x6 — a Letter-size PDF with a label in the corner prints exactly
+  that way
+- **Scale to Fit** should be **Print Entire Image**, not *Fill Entire Paper*
+- Check the physical roll matches, and that the **gap sensor is calibrated**
 
 ---
 

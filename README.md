@@ -811,11 +811,29 @@ Rosetta 2 fixes this today, but it is being retired.
 | --- | --- |
 | On macOS 27 or earlier, need it working now | Install Rosetta 2. This guide works. |
 | Planning ahead | Ask your printer vendor for a **native Apple Silicon (arm64) driver**. It's a reasonable request and vendor pressure is what gets them built. |
-| Vendor is unresponsive or gone | Look for a generic driver that speaks your printer's language, or drive the printer directly over port 9100. See [technical notes](docs/technical-notes.md). |
+| Vendor is unresponsive or gone | **Use the [native filter](native-filter/) in this repository** — a script-based replacement with no CPU architecture, so Rosetta is irrelevant. Verified on USB and Wi-Fi. |
 | Buying a new label printer | Check for a **native Apple Silicon driver**, or **AirPrint / IPP Everywhere** support, which needs no vendor driver at all. |
 
 Before upgrading to macOS 28, re-run the diagnostic script. If it still reports an Intel-only filter,
 your printer will stop working on that upgrade.
+
+### A fix that outlives Rosetta
+
+This repository includes **[a native replacement filter](native-filter/)** for FreeX printers.
+
+It does the same job as FreeX's `rastertoFreeX` — converts a rasterised page into the printer's TSPL
+commands — but it is written as a **script**. A script has no CPU architecture, so it cannot fail
+with `Bad CPU type in executable`, on any Mac, ever. No Rosetta required.
+
+It has been verified printing real 4x6 USPS shipping labels over both USB and Wi-Fi, with scannable
+barcodes. It installs alongside FreeX's driver without touching it, so you can switch back at any
+time.
+
+```bash
+cd native-filter && sudo bash install.sh
+```
+
+See [native-filter/README.md](native-filter/README.md) for details, options and caveats.
 
 ---
 

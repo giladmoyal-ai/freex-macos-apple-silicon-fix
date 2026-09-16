@@ -1,0 +1,320 @@
+#!/usr/bin/env python3
+# NOTE: install.sh rewrites this shebang to an absolute interpreter path.
+# /usr/bin/python3 is a shim that asks xcode-select where the real Python is,
+# and the CUPS filter sandbox is not allowed to read /var/select/developer_dir,
+# so the shim fails with "Operation not permitted" and the job dies.
+"""
+rastertofreex - a CUPS raster filter for FreeX WiFi thermal label printers.
+
+WHY THIS EXISTS
+---------------
+FreeX ships /usr/libexec/cups/filter/rastertoFreeX as an Intel-only (x86_64)
+Mach-O binary. On Apple Silicon it needs Rosetta 2, and Rosetta stops covering
+general-purpose binaries in macOS 28 - at which point that driver simply cannot
+run and the printer stops working.
+
+This is a drop-in replacement written as a *script*. A script has no CPU
+architecture, so it cannot ever fail with "Bad CPU type in executable". It runs
+on Intel, on Apple Silicon, and on whatever comes next, with no rebuild.
+
+WHAT IT DOES
+------------
+Reads CUPS raster (8-bit grayscale, as the FreeX PPD requests) and emits TSPL -
+the label language the original driver speaks. The command set was recovered
+from strings inside the vendor binary:
+
+    SIZE <w>,<h>          label dimensions
+    GAP <g>,0             gap between labels, for the media sensor
+    DENSITY <n>           print darkness, 0-15
+    CLS                   clear the image buffer
+    BITMAP x,y,wbytes,h,1,<binary>    1-bit raster block, mode 1
+    PRINT 1,<copies>      print the buffer
+
+Bit polarity in mode 1: 1 = white (no dot), 0 = black (dot).
+
+USAGE (CUPS calls this for you)
+    rastertofreex job-id user title copies options [file]
+
+Project: https://github.com/giladmoyal-AI/freex-macos-apple-silicon-fix
+License: MIT
+"""
+
+import sys, os, struct
+
+# ---------------------------------------------------------------- constants
+# CUPS writes the sync word as a 32-bit int in NATIVE byte order, so on a
+# little-endian machine 0x52615333 ("RaS3") lands on disk as the bytes "3SaR".
+# The reversed spelling therefore means native/little-endian, not big-endian.
+SYNC = {
+    b"tSaR": ("<", 1), b"RaSt": (">", 1),   # v1: 420-byte header, uncompressed
+    b"2SaR": ("<", 2), b"RaS2": (">", 2),   # v2: 1796-byte header, RLE
+    b"3SaR": ("<", 3), b"RaS3": (">", 3),   # v3: 1796-byte header, uncompressed
+}
+MAX_DIM = 100000        # guard against a mis-parsed header eating all memory
+V1_HEADER, V2_HEADER = 420, 1796
+
+# Offsets of the unsigned fields we care about, from the start of the header.
+# The header begins with 4 x 64-byte strings (256 bytes), then unsigned ints.
+OFF_HWRES_X     = 256 + 5 * 4
+OFF_CUPS_WIDTH  = 256 + 29 * 4
+OFF_CUPS_HEIGHT = 256 + 30 * 4
+OFF_BITS_PIXEL  = 256 + 33 * 4
+OFF_BYTES_LINE  = 256 + 34 * 4
+OFF_CSPACE      = 256 + 36 * 4
+
+
+def log(level, msg):
+    """CUPS reads stderr; these show up in /var/log/cups/error_log."""
+    sys.stderr.write(f"{level}: {msg}\n")
+    sys.stderr.flush()
+
+
+def parse_options(s):
+    """Parse the CUPS options string (space-separated key=value / flags)."""
+    out = {}
+    for tok in (s or "").split():
+        if "=" in tok:
+            k, v = tok.split("=", 1)
+            out[k.lower()] = v
+        else:
+            out[tok.lower()] = "true"
+    return out
+
+
+# ---------------------------------------------------------------- raster input
+class RasterReader:
+    def __init__(self, fh):
+        magic = fh.read(4)
+        if magic not in SYNC:
+            raise ValueError(f"not CUPS raster data (magic {magic!r})")
+        self.endian, self.version = SYNC[magic]
+        self.hdr_len = V1_HEADER if self.version == 1 else V2_HEADER
+        self.compressed = self.version == 2
+        self.fh = fh
+
+    def _u32(self, buf, off):
+        return struct.unpack_from(self.endian + "I", buf, off)[0]
+
+    def next_page(self):
+        hdr = self.fh.read(self.hdr_len)
+        if not hdr or len(hdr) < self.hdr_len:
+            return None
+        width  = self._u32(hdr, OFF_CUPS_WIDTH)
+        height = self._u32(hdr, OFF_CUPS_HEIGHT)
+        lbytes = self._u32(hdr, OFF_BYTES_LINE)
+        if not (0 < width <= MAX_DIM and 0 < height <= MAX_DIM
+                and 0 < lbytes <= MAX_DIM):
+            raise ValueError(
+                f"implausible page header (w={width} h={height} "
+                f"bytes/line={lbytes}) - raster byte order may be wrong")
+        return {
+            "width":      self._u32(hdr, OFF_CUPS_WIDTH),
+            "height":     self._u32(hdr, OFF_CUPS_HEIGHT),
+            "bpp":        self._u32(hdr, OFF_BITS_PIXEL),
+            "line_bytes": self._u32(hdr, OFF_BYTES_LINE),
+            "cspace":     self._u32(hdr, OFF_CSPACE),
+            "dpi":        self._u32(hdr, OFF_HWRES_X) or 203,
+        }
+
+    def read_page_data(self, page):
+        """Return a list of rows, each `line_bytes` long."""
+        h, lb = page["height"], page["line_bytes"]
+        if not self.compressed:
+            rows = []
+            for _ in range(h):
+                row = self.fh.read(lb)
+                if len(row) < lb:
+                    row = row + b"\xff" * (lb - len(row))
+                rows.append(row)
+            return rows
+        return self._read_rle(page)
+
+    def _read_rle(self, page):
+        """
+        CUPS v2 RLE. Each line group starts with a byte holding (repeat - 1).
+        Within a line: a count byte c; c < 128 means (c + 1) copies of the next
+        pixel, c >= 128 means (257 - c) literal pixels follow.
+        """
+        h, lb, bpp = page["height"], page["line_bytes"], page["bpp"]
+        pixel = max(1, bpp // 8)          # <8bpp packs into whole bytes
+        rows, y = [], 0
+        while y < h:
+            b = self.fh.read(1)
+            if not b:
+                break
+            repeat = b[0] + 1
+            line = bytearray()
+            while len(line) < lb:
+                c = self.fh.read(1)
+                if not c:
+                    break
+                c = c[0]
+                if c < 128:
+                    chunk = self.fh.read(pixel)
+                    if not chunk:
+                        break
+                    line += chunk * (c + 1)
+                else:
+                    n = (257 - c) * pixel
+                    chunk = self.fh.read(n)
+                    if not chunk:
+                        break
+                    line += chunk
+            line = bytes(line[:lb]).ljust(lb, b"\xff")
+            for _ in range(min(repeat, h - y)):
+                rows.append(line)
+            y += repeat
+        while len(rows) < h:
+            rows.append(b"\xff" * lb)
+        return rows[:h]
+
+
+# ---------------------------------------------------------------- conversion
+def rows_to_tspl_bitmap(rows, width, line_bytes, bpp, cspace, threshold, dither):
+    """
+    Pack raster rows into TSPL mode-1 bitmap bytes: bit 1 = white, bit 0 = black.
+
+    The FreeX PPD asks for 8-bit CUPS_CSPACE_W (0 = black, 255 = white), so a
+    grayscale value maps straight onto the bit: light -> 1, dark -> 0.
+    """
+    out_bytes = (width + 7) // 8
+    packed = bytearray()
+
+    if bpp == 1:
+        # Already 1-bit. CUPS_CSPACE_K (3) sets bits for ink, so invert it;
+        # CUPS_CSPACE_W leaves 1 = white, which is what TSPL mode 1 wants.
+        invert = (cspace == 3)
+        for row in rows:
+            r = row[:out_bytes].ljust(out_bytes, b"\x00" if invert else b"\xff")
+            packed += bytes(~b & 0xFF for b in r) if invert else r
+        return bytes(packed), out_bytes
+
+    if bpp != 8:
+        raise ValueError(f"unsupported bits-per-pixel: {bpp}")
+
+    if dither:
+        # Floyd-Steinberg. Better for photos, worse for barcodes.
+        err = [0.0] * (width + 2)
+        for row in rows:
+            nxt = [0.0] * (width + 2)
+            acc, bit_count, cur = bytearray(), 0, 0
+            for x in range(width):
+                g = (row[x] if x < len(row) else 255) + err[x + 1]
+                white = g >= threshold
+                e = g - (255.0 if white else 0.0)
+                err[x + 2] += e * 7 / 16
+                nxt[x] += e * 3 / 16
+                nxt[x + 1] += e * 5 / 16
+                nxt[x + 2] += e * 1 / 16
+                cur = (cur << 1) | (1 if white else 0)
+                bit_count += 1
+                if bit_count == 8:
+                    acc.append(cur); cur = 0; bit_count = 0
+            if bit_count:
+                acc.append((cur << (8 - bit_count)) | ((1 << (8 - bit_count)) - 1))
+            packed += bytes(acc).ljust(out_bytes, b"\xff")
+            err = nxt
+        return bytes(packed), out_bytes
+
+    # Plain threshold - the right default for text and barcodes.
+    lut = bytes(1 if i >= threshold else 0 for i in range(256))
+    for row in rows:
+        acc, cur, bit_count = bytearray(), 0, 0
+        for x in range(width):
+            cur = (cur << 1) | lut[row[x] if x < len(row) else 255]
+            bit_count += 1
+            if bit_count == 8:
+                acc.append(cur); cur = 0; bit_count = 0
+        if bit_count:
+            acc.append((cur << (8 - bit_count)) | ((1 << (8 - bit_count)) - 1))
+        packed += bytes(acc).ljust(out_bytes, b"\xff")
+    return bytes(packed), out_bytes
+
+
+# ---------------------------------------------------------------- main
+def main(argv):
+    if len(argv) < 6:
+        sys.stderr.write(
+            "ERROR: rastertofreex job-id user title copies options [file]\n")
+        return 1
+
+    copies = max(1, int(argv[4]) if argv[4].isdigit() else 1)
+    opts = parse_options(argv[5])
+
+    threshold = int(opts.get("freex-threshold", 128))
+    dither    = opts.get("freex-dither", "false").lower() in ("true", "yes", "1")
+    density   = int(opts.get("darkness", opts.get("freex-density", 8)))
+    gap_mm    = float(opts.get("freex-gap-mm", 3.0))
+    band      = int(opts.get("freex-band-rows", 0))   # 0 = one bitmap per page
+
+    src = open(argv[6], "rb") if len(argv) > 6 else sys.stdin.buffer
+    out = sys.stdout.buffer
+
+    try:
+        r = RasterReader(src)
+    except ValueError as e:
+        log("ERROR", str(e))
+        return 1
+
+    log("INFO", f"rastertofreex: raster v{r.version}, "
+                f"{'RLE' if r.compressed else 'uncompressed'}")
+
+    page_no = 0
+    while True:
+        page = r.next_page()
+        if page is None:
+            break
+        page_no += 1
+        rows = r.read_page_data(page)
+        w, h, dpi = page["width"], page["height"], page["dpi"]
+
+        log("INFO", f"rastertofreex: page {page_no} {w}x{h} @{dpi}dpi "
+                    f"{page['bpp']}bpp cspace={page['cspace']}")
+        # Tell CUPS how far along we are, so the queue shows real progress.
+        log("PAGE", f"{page_no} {copies}")
+
+        data, out_bytes = rows_to_tspl_bitmap(
+            rows, w, page["line_bytes"], page["bpp"], page["cspace"],
+            threshold, dither)
+
+        w_mm = w / dpi * 25.4
+        h_mm = h / dpi * 25.4
+
+        out.write(f"SIZE {w_mm:.1f} mm,{h_mm:.1f} mm\r\n".encode())
+        out.write(f"GAP {gap_mm:.1f} mm,0 mm\r\n".encode())
+        out.write(f"DENSITY {max(0, min(15, density))}\r\n".encode())
+        out.write(b"DIRECTION 1\r\n")
+        out.write(b"CLS\r\n")
+
+        if band and band > 0:
+            for y0 in range(0, h, band):
+                bh = min(band, h - y0)
+                blob = data[y0 * out_bytes:(y0 + bh) * out_bytes]
+                out.write(f"BITMAP 0,{y0},{out_bytes},{bh},1,".encode())
+                out.write(blob)
+                out.write(b"\r\n")
+        else:
+            # Mirror the vendor driver: one bitmap for the whole page.
+            out.write(f"BITMAP 0,0,{out_bytes},{h},1,".encode())
+            out.write(data)
+            out.write(b"\r\n")
+
+        out.write(f"PRINT 1,{copies}\r\n".encode())
+        out.flush()
+
+    if page_no == 0:
+        log("ERROR", "rastertofreex: no pages found in raster stream")
+        return 1
+
+    log("INFO", f"rastertofreex: done, {page_no} page(s)")
+    return 0
+
+
+if __name__ == "__main__":
+    try:
+        sys.exit(main(sys.argv))
+    except BrokenPipeError:
+        sys.exit(0)
+    except Exception as exc:                       # never hang the queue
+        log("ERROR", f"rastertofreex: {type(exc).__name__}: {exc}")
+        sys.exit(1)

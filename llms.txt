@@ -1,0 +1,67 @@
+# FreeX / Thermal Printer Fix for Apple Silicon Macs
+
+> Fix for macOS printing errors "Filter failed" and "The printer software is not compatible with
+> this device" on Apple Silicon Macs (M1, M2, M3, M4). Root cause: the printer vendor's CUPS filter
+> is an Intel-only (x86_64) binary that macOS cannot execute without Rosetta 2. Fix:
+> `softwareupdate --install-rosetta`, then delete and recreate the printer queue.
+
+## Summary of the problem and fix
+
+- **Symptoms:** "Filter failed" in the macOS print queue; "The printer software is not compatible
+  with this device"; printer pauses after each job; the vendor's own utility app connects to the
+  printer successfully while normal macOS apps cannot print. Affects USB and Wi-Fi equally.
+- **Underlying error**, visible only in `/var/log/cups/error_log`:
+  `execv of /usr/libexec/cups/filter/<FILTER> failed. err:86, Bad CPU type in executable`,
+  with state `com.apple.badarch-error` and exit status 186.
+- **Root cause:** the vendor's CUPS filter is `Mach-O 64-bit executable x86_64` — Intel-only, with
+  no arm64 slice. Apple Silicon Macs cannot run it, and Rosetta 2 is not installed by default.
+  Because CUPS filters are launched by the `cupsd` background daemon, macOS never shows its usual
+  "install Rosetta" prompt, so the failure is silent.
+- **Fix:** `softwareupdate --install-rosetta`, then remove and re-add the printer queue in
+  System Settings > Printers & Scanners, selecting the real vendor driver via
+  "Use > Select Software...".
+- **Verify:** `arch -x86_64 /usr/libexec/cups/filter/<FILTER>` should print the filter's usage
+  message (e.g. `ERROR: rastertoepson job-id user title copies options [file]`) rather than
+  `Bad CPU type in executable`.
+- **Does NOT work:** reinstalling the vendor driver. It reinstalls the same Intel binary.
+- **Scope:** not FreeX-specific. Applies to any printer whose macOS driver ships an Intel-only CUPS
+  filter — common among budget 4x6 thermal shipping-label printers, receipt/POS printers, and any
+  driver not rebuilt since 2020.
+- **Time limit:** macOS 27 is the last release with full Rosetta 2. From macOS 28, Rosetta is
+  limited to legacy game frameworks and Intel-only printer drivers stop working entirely; a native
+  arm64 driver or a driverless path (AirPrint / IPP Everywhere) is then required.
+
+## Quick detection
+
+```
+uname -m                                                              # arm64 = Apple Silicon
+file /usr/libexec/cups/filter/* | grep -i x86_64 | grep -vi arm64     # any hit = Intel-only filter
+/usr/bin/pgrep -q oahd && echo installed || echo missing              # Rosetta 2 present?
+```
+
+## Docs
+
+- [README](README.md): full guide — symptoms, quick fix, root-cause explanation, self-diagnosis,
+  USB setup, Wi-Fi setup, adding a network printer over port 9100, 4x6 label defaults, Rosetta 2
+  end-of-life, troubleshooting table, and FAQ.
+- [Troubleshooting](docs/troubleshooting.md): symptom-by-symptom guide, including "Filter failed",
+  "Bad CPU type in executable", stale queues, wrong label size, and network printers that are
+  reachable but do not print.
+- [Wi-Fi setup](docs/wifi-setup.md): configuring a FreeX thermal printer for 2.4 GHz Wi-Fi via the
+  vendor Toolbox, DHCP and port 9100, then adding it in macOS as HP Jetdirect - Socket.
+- [Other printers](docs/other-printers.md): applying the same diagnosis and fix to any brand;
+  identifying a printer's filter; generic driver options by printer language (TSPL, ZPL, EPL,
+  ESC/POS, PostScript, PCL, IPP Everywhere); what to do when no native driver exists.
+- [Technical notes](docs/technical-notes.md): how CUPS filters work, tracing the failure with
+  `cupsctl --debug-logging`, the TSPL/TSC command set found inside the FreeX filter, and an
+  experimental direct-to-port-9100 approach that is documented but not recommended.
+- [Diagnostic script](scripts/diagnose_freex_macos.sh): read-only; scans every installed CUPS filter
+  for Intel-only binaries, checks for Rosetta 2, lists printer queues, and prints a recommended next
+  step. Installs nothing and changes no settings.
+
+## Notes
+
+- Independent community guide. Not affiliated with or endorsed by FreeX, Apple, or any printer
+  manufacturer. No proprietary drivers, firmware, or binaries are distributed here.
+- All IP addresses and network names in the documentation are placeholders
+  (`192.168.1.100`, `YOUR_WIFI_NAME`, `YOUR_MAC_USERNAME`).

@@ -1,0 +1,782 @@
+# FreeX Thermal Printer on Apple Silicon Mac — Fix "Filter failed" and "The printer software is not compatible with this device"
+
+**FreeX WiFi Thermal Label Printer not printing on an M1/M2/M3/M4 Mac?** Your FreeX driver is an
+Intel-only program, and your Mac can't run it. Install Rosetta 2, then recreate the printer queue:
+
+```bash
+softwareupdate --install-rosetta
+```
+
+That fixes it in about five minutes. This guide explains how to confirm that's your problem, how to
+fix it properly over USB and Wi-Fi, and what to do when Rosetta 2 goes away.
+
+![Platform](https://img.shields.io/badge/platform-macOS%2011%E2%80%9327-lightgrey)
+![Apple Silicon](https://img.shields.io/badge/Apple%20Silicon-M1%20%C2%B7%20M2%20%C2%B7%20M3%20%C2%B7%20M4-black)
+![License](https://img.shields.io/badge/license-MIT-blue)
+
+> **⏳ This fix has an expiry date.** macOS 27 is the **last** release with full Rosetta 2. From
+> macOS 28 onward Apple limits Rosetta to legacy game frameworks — general-purpose Intel binaries,
+> **including printer drivers**, stop running. See [The Rosetta 2 deadline](#the-rosetta-2-deadline).
+
+**Applies to:** FreeX WiFi Thermal Label Printers and **any** printer whose macOS driver ships an
+Intel-only CUPS filter — commonly budget 4x6 thermal shipping-label printers. Worked example uses
+FreeX; the diagnosis and fix are vendor-neutral. See [Other printers](docs/other-printers.md).
+
+### FreeX specifics at a glance
+
+| | |
+| --- | --- |
+| Driver name in macOS | **FreeX WiFi Thermal Printer** (Use → Select Software…) |
+| PPD file | `/Library/Printers/PPDs/Contents/Resources/FreeX.ppd.gz` |
+| CUPS filter | `/usr/libexec/cups/filter/rastertoFreeX` |
+| Broken filter architecture | `Mach-O 64-bit executable x86_64` (Intel-only) |
+| Vendor utility | FreeX WiFi Toolbox for macOS |
+| Network printing | Raw TCP port **9100**, added as **HP Jetdirect – Socket** |
+| 4x6 label page size | `w283h425` = 100 × 150 mm |
+| Wi-Fi band | **2.4 GHz only** |
+| The fix | `softwareupdate --install-rosetta` |
+
+---
+
+## Table of contents
+
+- [FreeX specifics at a glance](#freex-specifics-at-a-glance)
+- [Not technical? Start here](#not-technical-start-here)
+- [Does this apply to me?](#does-this-apply-to-me)
+- [Symptoms](#symptoms)
+- [Quick fix (5 minutes)](#quick-fix-5-minutes)
+- [Why this happens](#why-this-happens)
+- [Diagnose it yourself](#diagnose-it-yourself)
+- [The full fix](#the-full-fix)
+- [USB setup](#usb-setup)
+- [Wi-Fi setup](#wi-fi-setup)
+- [Add a Wi-Fi printer on macOS](#add-a-wi-fi-printer-on-macos)
+- [4x6 label defaults](#4x6-label-defaults)
+- [The Rosetta 2 deadline](#the-rosetta-2-deadline)
+- [Troubleshooting](#troubleshooting)
+- [FAQ](#faq)
+- [Technical notes](#technical-notes)
+- [Disclaimer](#disclaimer)
+
+---
+
+## Not technical? Start here
+
+**You do not need to understand any of this to fix it.** Follow these steps exactly. Total time:
+about five minutes. Nothing here can damage your Mac or your printer.
+
+### Step 1 — Open Terminal
+
+Terminal is an app already on your Mac. To open it:
+
+1. Press **Command (⌘) + Space** — a search box appears in the middle of your screen
+2. Type **Terminal**
+3. Press **Return**
+
+A window with plain text appears. That's Terminal. It looks intimidating; you only need one line.
+
+### Step 2 — Copy and paste one command
+
+Copy this exactly, paste it into the Terminal window, and press **Return**:
+
+```
+softwareupdate --install-rosetta
+```
+
+**What this does:** downloads a small, official Apple component called Rosetta 2 that lets your Mac
+run older software. Your printer driver is older software. That's the whole problem.
+
+**Is it safe?** Yes. It comes from Apple's own servers, using a command Apple provides. It doesn't
+change your files, your settings, or any of your apps. It doesn't need a restart. Many Macs already
+have it.
+
+### Step 3 — Agree to the licence
+
+Terminal will show a licence agreement and ask you to agree. Type **A** and press **Return**.
+
+Then wait. It takes under a minute. When you see your normal prompt again, it's done.
+
+> **No password is needed** for this command. If Terminal *does* ask for a password, it's your Mac
+> login password. You won't see anything as you type — that's normal. Press Return when finished.
+
+### Step 4 — Delete your printer and add it back
+
+This part is important. Your Mac saved a "broken" version of the printer, and it stays broken until
+you recreate it.
+
+1. Open **System Settings** (the grey gear icon in your Dock, or ⌘+Space → "System Settings")
+2. Click **Printers & Scanners** in the left sidebar
+3. Click your FreeX printer in the list
+4. Click **Remove Printer…** and confirm
+5. Click the **Add Printer, Scanner, or Fax…** button
+6. Select your FreeX printer from the list
+7. **This step matters:** find the **Use** dropdown near the bottom. Click it and choose
+   **Select Software…**, then pick **FreeX WiFi Thermal Printer** from the list, then **OK**
+8. Click **Add**
+
+> **Why step 7 matters:** if you skip it, macOS may pick "Generic PostScript Printer", which cannot
+> print labels and gives you the same error all over again.
+
+### Step 5 — Print a label
+
+Open a label and print it normally. It should work.
+
+**Still not working?** Go to [Troubleshooting](#troubleshooting), or run the
+[diagnostic script](#option-a--run-the-diagnostic-script) which checks everything and tells you
+what's wrong in plain English.
+
+### What if I'd rather not use Terminal at all?
+
+There's no way around it for this particular fix — Apple provides no clickable installer for
+Rosetta 2. The single command above is the only Terminal step in the entire process; everything else
+is normal point-and-click.
+
+---
+
+## Does this apply to me?
+
+Run this. Two commands, no changes to your system:
+
+```bash
+uname -m
+file /usr/libexec/cups/filter/* 2>/dev/null | grep -i x86_64 | grep -vi arm64
+```
+
+If the first prints **`arm64`** and the second prints **any** filter, you have this problem — one of
+your printer drivers is Intel-only and needs Rosetta 2.
+
+Prefer a full report? Use the [diagnostic script](#option-a--run-the-diagnostic-script).
+
+---
+
+## Symptoms
+
+You almost certainly have this problem if **all** of these are true:
+
+- You are on an **Apple Silicon** Mac (Apple M1, M2, M3, M4 or later) — not Intel.
+- The printer itself **works**: it powers on, self-tests, feeds labels, and the vendor's own utility
+  app connects to it successfully.
+- Printing from **normal macOS apps** (Preview, Chrome, Safari, Word, Photos) fails every time.
+- macOS shows one or more of:
+  - **"The printer software is not compatible with this device."**
+  - **"Filter failed"** in the print queue window
+  - The printer **pauses itself** after each job
+  - Jobs that vanish, or sit at "Printing" forever, with nothing coming out
+- **Reinstalling the driver changes nothing** — you may have done it several times already.
+
+In the system log (see [Diagnose it yourself](#option-c--confirm-it-in-the-cups-log)) the real error
+is:
+
+```
+Bad CPU type in executable
+```
+
+This affects **both USB and Wi-Fi/network printing**, because both go through the same driver
+component.
+
+### What it is *not*
+
+This is not a broken download, not a bad USB cable, not a firmware problem, not a macOS bug, and not
+a defective printer. Nothing is corrupt. Your Mac simply cannot execute the kind of program the
+driver is made of.
+
+---
+
+## Quick fix (5 minutes)
+
+**1. Install the current driver software** for your printer, from the **manufacturer's official
+download page**. (FreeX users: see [Getting the FreeX software](#getting-the-freex-software).)
+
+**2. Install Rosetta 2.** Open Terminal and run:
+
+```bash
+softwareupdate --install-rosetta
+```
+
+Accept the licence when prompted. Small download, under a minute, no restart needed. To skip the
+prompt: `softwareupdate --install-rosetta --agree-to-license`
+
+**3. Delete and recreate the printer queue.** System Settings → **Printers & Scanners** → select the
+printer → **Remove Printer…**, then add it again. A queue created *before* Rosetta was installed can
+stay stuck in a broken or paused state even after the underlying problem is fixed.
+
+**4. Print a test page.** It should now work, over USB and over Wi-Fi.
+
+> **Reinstalling the driver again will not help.** The driver file isn't damaged. It's an Intel
+> program, and reinstalling it produces another identical Intel program. Only Rosetta 2 lets your
+> Mac run it.
+
+---
+
+## Why this happens
+
+macOS prints through **CUPS**. Every print job travels a chain:
+
+```
+App → PDF → CUPS → raster image → VENDOR FILTER → printer language → printer
+                                   ↑
+                        the driver program that breaks
+```
+
+The **vendor filter** is a small program the printer manufacturer supplies to translate a page image
+into that printer's own language. It lives in `/usr/libexec/cups/filter/`, and the printer's PPD
+file names it. For FreeX:
+
+```bash
+gunzip -c /Library/Printers/PPDs/Contents/Resources/FreeX.ppd.gz | grep -i cupsFilter
+```
+
+```
+*cupsFilter: "application/vnd.cups-raster 0 rastertoFreeX"
+```
+
+Now ask what kind of program that filter actually is:
+
+```bash
+file /usr/libexec/cups/filter/rastertoFreeX
+```
+
+```
+/usr/libexec/cups/filter/rastertoFreeX: Mach-O 64-bit executable x86_64
+```
+
+**`x86_64` means Intel.** There is no `arm64` slice — it is not a universal binary. An Apple Silicon
+Mac cannot run Intel code natively. Without Rosetta 2 the kernel refuses to launch it, and CUPS
+records:
+
+```
+execv of /usr/libexec/cups/filter/rastertoFreeX failed. err:86, Bad CPU type in executable
+STATE: +com.apple.badarch-error
+PID 12345 (/usr/libexec/cups/filter/rastertoFreeX) stopped with status 186 (Bad CPU type in executable)
+```
+
+macOS then shows you the far less helpful **"Filter failed"** and **"The printer software is not
+compatible with this device."**
+
+**Rosetta 2** is Apple's Intel-to-Apple-Silicon translation layer. Install it and CUPS can run the
+Intel filter under translation. Nothing else changes.
+
+### Why Rosetta wasn't already installed
+
+Rosetta 2 is **not** preinstalled on Apple Silicon Macs. macOS offers to install it the first time
+you open an Intel **app** — a visible prompt you click through.
+
+A printer filter is never opened by you. It's launched by `cupsd`, a background system daemon with
+no window to show a prompt in. So the automatic offer never fires. On a Mac that has never run any
+Intel software, the driver fails from the moment it's installed, and the only honest explanation is
+buried in a log file.
+
+That's why this is so hard to search for: the visible error blames the *printer*, and the real cause
+is a missing *system component* nobody told you about.
+
+---
+
+## Diagnose it yourself
+
+### Option A — run the diagnostic script
+
+**Read-only.** It installs nothing, changes no setting, touches no printer, and enables no logging.
+It scans **every** CUPS filter on your Mac, so it works for any printer brand.
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/giladmoyal-AI/freex-macos-apple-silicon-fix/main/scripts/diagnose_freex_macos.sh -o diagnose_freex_macos.sh
+less diagnose_freex_macos.sh     # always read a script before you run it
+bash diagnose_freex_macos.sh
+```
+
+It reports your macOS version and CPU, whether Rosetta 2 is installed, every vendor print filter and
+its **architecture**, your printer queues, and a plain-English verdict with the exact next step.
+
+Add `--log` to include recent CUPS errors, or `--help` for usage.
+
+### Option B — check by hand
+
+```bash
+# 1. Which CPU?  arm64 = Apple Silicon, x86_64 = Intel
+uname -m
+
+# 2. Are any installed print filters Intel-only?
+for f in /usr/libexec/cups/filter/*; do
+  file "$f" | grep -qi 'x86_64' && ! file "$f" | grep -qi 'arm64' && file "$f"
+done
+
+# 3. Is Rosetta 2 present?
+/usr/bin/pgrep -q oahd && echo "Rosetta installed" || echo "Rosetta NOT installed"
+
+# 4. Which filter does your printer's PPD call for?
+gunzip -c /Library/Printers/PPDs/Contents/Resources/YOUR_PPD.ppd.gz | grep -iE 'cupsFilter'
+
+# 5. Where is it, and what is it?
+find /Library /usr/libexec -type f -name 'rastertoFreeX' 2>/dev/null \
+  -exec ls -l {} \; -exec file {} \;
+```
+
+`arm64` in step 1 + any output from step 2 + "NOT installed" in step 3 = this is your problem.
+
+### Option C — confirm it in the CUPS log
+
+The definitive proof:
+
+```bash
+sudo cupsctl --debug-logging        # turn on verbose logging
+# ...now try to print, and let it fail...
+sudo tail -n 100 /var/log/cups/error_log
+```
+
+Search that output for `Bad CPU type in executable`. If it's there, stop looking — that's the whole
+problem.
+
+Turn logging back off afterwards; it's noisy and writes a lot to disk:
+
+```bash
+sudo cupsctl --no-debug-logging
+```
+
+---
+
+## The full fix
+
+### 1. Install Rosetta 2
+
+```bash
+softwareupdate --install-rosetta
+```
+
+Read and accept the licence. No restart required.
+
+Non-interactive: `softwareupdate --install-rosetta --agree-to-license`
+
+### 2. Verify the filter can now execute
+
+Point this at your own printer's filter:
+
+```bash
+arch -x86_64 /usr/libexec/cups/filter/rastertoFreeX
+```
+
+**Good** — the filter prints its own usage message, meaning it launched:
+
+```
+ERROR: rastertoepson job-id user title copies options [file]
+```
+
+Every CUPS filter takes `job-id user title copies options [file]`, so a usage complaint is success
+here. (`rastertoepson` is a leftover string from the open-source filter FreeX's driver was built
+from. It's normal and not a sign you have the wrong driver.)
+
+**Bad** — Rosetta didn't install; run step 1 again and watch for errors:
+
+```
+Bad CPU type in executable
+```
+
+> This proves the filter can **run**. It doesn't print anything and is not a print test.
+
+### 3. Recreate the printer queue
+
+A queue created while the driver was unusable can stay paused or hold dead jobs.
+
+1. System Settings → **Printers & Scanners**
+2. Select the printer → **Remove Printer…**
+3. Add it again — [USB](#usb-setup) or [Wi-Fi](#add-a-wi-fi-printer-on-macos)
+4. If it shows as paused, open the queue and choose **Resume**
+
+### 4. Print
+
+Print a real label or test page. USB and Wi-Fi should both work now.
+
+---
+
+## Getting the FreeX software
+
+This repository **does not** redistribute FreeX software, drivers, firmware, or binaries — those are
+proprietary. Download the Mac driver and WiFi Toolbox **only from FreeX's official website or the
+support link supplied with your printer**.
+
+The package this guide was written against was named along the lines of
+`MacOS_FreeX_Driver_WiFi-Toolbox_v1.3` and contained:
+
+- a **driver `.pkg`** — installs the PPD and the `rastertoFreeX` CUPS filter
+- a **WiFi Toolbox `.app`** — configures the printer's wireless and network settings
+
+Never take printer drivers or firmware from third-party "driver download" sites. Bad firmware can
+permanently ruin a thermal printer.
+
+---
+
+## USB setup
+
+1. Connect the printer by USB and power it on.
+2. System Settings → **Printers & Scanners** → **Add Printer, Scanner, or Fax…**
+3. On the **Default** tab, select your printer.
+4. In the **Use** dropdown choose **Select Software…**
+5. Pick your printer's driver — for FreeX, **FreeX WiFi Thermal Printer**.
+6. Click **Add**.
+
+**Do not accept a generic driver.** If macOS auto-fills *Generic PostScript Printer* or *Generic PCL
+Printer*, change it. A thermal label printer understands neither PostScript nor PCL, and a generic
+driver produces "Filter failed" or pages of garbage.
+
+Created this queue before installing Rosetta? Remove and re-add it —
+see [step 3 above](#3-recreate-the-printer-queue).
+
+---
+
+## Wi-Fi setup
+
+Full walkthrough: **[docs/wifi-setup.md](docs/wifi-setup.md)**. Summary for FreeX:
+
+Connect by **USB first** — the Toolbox configures Wi-Fi *through* the USB connection.
+
+**FreeX Setup → WiFi**
+
+| Field | Value |
+| --- | --- |
+| Mode | `STA` |
+| Authentication | `WPA-PSK/WPA2-PSK` |
+| Type | `WPA2-PSK` |
+| Encryption | `AES` |
+| SSID | `YOUR_WIFI_NAME` (2.4 GHz) |
+| Password | your Wi-Fi password |
+
+**FreeX Setup → Ethernet**
+
+| Field | Value |
+| --- | --- |
+| DHCP | `Enable` |
+| Port | `9100` |
+
+Apply, then **restart the printer**. It prints a small configuration label showing its IP address,
+the network it joined, and port `9100`.
+
+> **These printers are 2.4 GHz only.** If your router broadcasts one merged name for 2.4 GHz and
+> 5 GHz, that is the most common reason setup fails.
+
+Confirm the Mac can reach it (use your printer's real IP):
+
+```bash
+nc -vz 192.168.1.100 9100
+```
+
+```
+Connection to 192.168.1.100 port 9100 [tcp/hp-pdl-datastr] succeeded!
+```
+
+---
+
+## Add a Wi-Fi printer on macOS
+
+1. System Settings → **Printers & Scanners** → **Add Printer, Scanner, or Fax…**
+2. Choose the **IP** tab.
+
+| Field | Value |
+| --- | --- |
+| Address | your printer's IP, e.g. `192.168.1.100` |
+| Protocol | **HP Jetdirect – Socket** |
+| Queue | *leave blank* |
+| Name | anything, e.g. `Label Printer (WiFi)` |
+| Use | **Select Software…** → your printer's driver |
+
+3. Click **Add**.
+
+**"HP Jetdirect – Socket" is correct**, and has nothing to do with HP. It's simply macOS's name for
+raw TCP printing on port 9100, which is what these printers speak. Don't use IPP, LPD, or AirPrint.
+
+This works **only after Rosetta 2 is installed** — network queues use the same Intel filter as USB
+queues.
+
+---
+
+## 4x6 label defaults
+
+Most 4x6 thermal drivers already default to the right size. Check yours:
+
+```bash
+lpstat -p                                      # list your queue names
+lpoptions -p YOUR_QUEUE_NAME -l | grep -i PageSize
+```
+
+```
+PageSize/Media Size: Custom.WIDTHxHEIGHT w283h283 w283h340 *w283h425 ...
+```
+
+The `*` marks the default. For FreeX, **`w283h425`** = 283 × 425 PostScript points = **100 × 150 mm**
+= a standard **4x6 shipping label**. The PPD lists it literally as `w283h425/100mmx150mm`.
+
+**But macOS apps still default to US Letter.** Preview in particular will happily open the print
+dialog on Letter and print a tiny, shifted, or clipped label. Fix it once with a preset:
+
+1. Open a label, press **⌘P**
+2. **Printer** → your label printer
+3. **Paper Size** → the 4x6 / 100×150 mm entry
+4. **Scale** → 100%, or "Actual Size" where offered
+5. **Presets** → **Save Current Settings as Preset…**
+6. Name it e.g. `Label 4x6`
+7. If offered, choose **Only this printer** so it doesn't hijack your other printers
+
+Select that preset whenever you print labels.
+
+Still wrong? Check the label file itself is genuinely 4x6 — a Letter-size PDF with a label in the
+corner prints exactly that way — and that **Scale to Fit** is off.
+
+---
+
+## The Rosetta 2 deadline
+
+Rosetta 2 fixes this today, but it is being retired.
+
+- **macOS 27 is the last release with full Rosetta 2.**
+- From **macOS 28**, Apple narrows Rosetta to legacy gaming frameworks only. General-purpose Intel
+  binaries — including **printer drivers and vendor utilities** — will no longer run.
+- macOS 26.4+ already shows a warning when you launch an Intel-only app.
+
+**What that means for you**
+
+| Situation | What to do |
+| --- | --- |
+| On macOS 27 or earlier, need it working now | Install Rosetta 2. This guide works. |
+| Planning ahead | Ask your printer vendor for a **native Apple Silicon (arm64) driver**. It's a reasonable request and vendor pressure is what gets them built. |
+| Vendor is unresponsive or gone | Look for a generic driver that speaks your printer's language, or drive the printer directly over port 9100. See [technical notes](docs/technical-notes.md). |
+| Buying a new label printer | Check for a **native Apple Silicon driver**, or **AirPrint / IPP Everywhere** support, which needs no vendor driver at all. |
+
+Before upgrading to macOS 28, re-run the diagnostic script. If it still reports an Intel-only filter,
+your printer will stop working on that upgrade.
+
+---
+
+## Troubleshooting
+
+Full detail in **[docs/troubleshooting.md](docs/troubleshooting.md)**.
+
+| Symptom | Cause | Fix |
+| --- | --- | --- |
+| Vendor app sees the printer, macOS printing fails | Vendor app bypasses CUPS; the CUPS filter is Intel-only | `softwareupdate --install-rosetta` |
+| `Bad CPU type in executable` in the CUPS log | Rosetta 2 missing | Install Rosetta, verify with `arch -x86_64 …` |
+| "Filter failed" on every job | Same cause — or a generic driver got selected | Install Rosetta; confirm the queue uses the real vendor driver |
+| Printer pauses itself after each job | Filter failing | Install Rosetta, then Resume the queue |
+| `nc -vz IP 9100` succeeds but nothing prints | Network is fine; the filter is failing | It's the Rosetta problem, not a network problem |
+| Reinstalled the driver repeatedly, no change | Reinstalling an Intel binary yields an Intel binary | Install Rosetta |
+| USB queue still errors after installing Rosetta | Stale queue created pre-Rosetta | Remove the printer, add it again |
+| Worked yesterday, dead today (Wi-Fi) | DHCP gave the printer a new IP | Reprint the config label; reserve the IP on your router |
+| Labels tiny, shifted, or on a huge blank page | App defaulted to Letter | Use a saved 4x6 preset |
+
+---
+
+## FAQ
+
+### Why won't my FreeX printer print from my Mac?
+
+Because the FreeX driver is Intel-only software and your Mac has an Apple Silicon chip (M1, M2, M3,
+M4). It physically cannot run that software until you install Rosetta 2, Apple's compatibility layer.
+Run `softwareupdate --install-rosetta`, then delete and re-add the printer. The printer itself is
+fine.
+
+### Why does my label printer work on Windows but not on my Mac?
+
+The Windows driver and the Mac driver are completely separate programs. The Windows one was built for
+your PC's processor and works. The Mac one was built for Intel Macs and was never rebuilt for Apple
+Silicon, so your Mac can't run it without Rosetta 2. It's not that the printer prefers Windows.
+
+### What is Rosetta 2, in plain English?
+
+A translator built by Apple. Older Mac software was written for Intel chips; new Macs use Apple's own
+chips, which speak a different language. Rosetta 2 translates on the fly so old software still runs.
+It's free, official, small, and installed with one command.
+
+### Can this damage my Mac or my printer?
+
+No. Installing Rosetta 2 adds an Apple component; it doesn't modify your files, apps, or settings,
+and needs no restart. Removing and re-adding a printer only affects that printer's entry on your Mac.
+The diagnostic script in this repo is read-only and changes nothing. Nothing in this guide touches
+printer firmware — the one genuinely risky thing with thermal printers, which is why we don't go near
+it.
+
+### How do I open Terminal on a Mac?
+
+Press **Command (⌘) + Space**, type **Terminal**, press **Return**. See
+[Not technical? Start here](#not-technical-start-here) for the full walkthrough.
+
+### Do I need an administrator password?
+
+Usually not — `softwareupdate --install-rosetta` normally runs without one. If you're asked, it's
+your Mac login password. Nothing is displayed as you type it; that's normal, just press Return.
+
+### How long does this take?
+
+About five minutes total. The Rosetta download is under a minute on a normal connection; re-adding
+the printer takes two or three.
+
+### It said Rosetta is already installed, or finished instantly. Now what?
+
+Then Rosetta wasn't your problem, or it was already fixed. Go straight to
+[deleting and re-adding the printer](#step-4--delete-your-printer-and-add-it-back) — a queue created while
+the driver was broken stays broken. If it still fails, run the
+[diagnostic script](#option-a--run-the-diagnostic-script).
+
+### Do I need to uninstall or reinstall the FreeX driver first?
+
+No. That's the most common wasted step. The driver you already have is fine — your Mac just couldn't
+run it. Install Rosetta 2 and the existing driver starts working.
+
+### Do I have to do this for every printer?
+
+Rosetta 2 is installed once per Mac and covers every Intel program. But each *printer queue* created
+while things were broken should be deleted and re-added.
+
+### What is a CUPS filter?
+
+CUPS is the printing system built into macOS. A "filter" is a small program from the printer
+manufacturer that converts your document into the specific commands your printer understands. FreeX's
+filter is called `rastertoFreeX`. It's this program — not the printer — that fails to run.
+
+### My printer prints a test page from the FreeX Toolbox but not from Preview or Chrome
+
+Classic symptom, and it confirms the diagnosis. The Toolbox talks to the printer directly and never
+uses the macOS driver. Preview and Chrome go through macOS, which needs the driver. So the Toolbox
+succeeds while everything else fails. Your hardware is fine; install Rosetta 2.
+
+### Does this work on macOS Sonoma, Sequoia, Tahoe, 26, or 27?
+
+Yes, on every macOS version through 27. From macOS 28 onward Rosetta 2 no longer covers printer
+drivers, and this fix stops working — see [The Rosetta 2 deadline](#the-rosetta-2-deadline).
+
+### What does "Filter failed" mean on macOS?
+
+CUPS successfully prepared your document but could not run the printer manufacturer's conversion
+program (the "filter"). On Apple Silicon Macs the usual reason is that the filter is an Intel-only
+binary and Rosetta 2 isn't installed. It is a **software** failure on your Mac, not a printer,
+cable, or network failure.
+
+### What does "The printer software is not compatible with this device" mean?
+
+Despite how it reads, "this device" means **your Mac**, not your printer. macOS is saying the driver
+software can't run on this computer's processor. The driver is Intel-only; your Mac is Apple
+Silicon. Install Rosetta 2 and it becomes compatible.
+
+### How do I know if my Mac is Apple Silicon or Intel?
+
+```bash
+uname -m
+```
+
+`arm64` = Apple Silicon (M1/M2/M3/M4…). `x86_64` = Intel. Or check  → About This Mac; Apple
+Silicon Macs list a "Chip" like Apple M4, Intel Macs list a "Processor".
+
+### How do I check whether a printer driver is Intel-only?
+
+```bash
+file /usr/libexec/cups/filter/*
+```
+
+Any filter that says `x86_64` **without** also saying `arm64` is Intel-only and needs Rosetta 2. A
+line reading "universal binary" with both architectures is fine.
+
+### Is Rosetta 2 safe to install?
+
+Yes. It's an official Apple component, installed with Apple's own `softwareupdate` command from
+Apple's servers. It doesn't modify your existing apps, needs no restart, and can be installed on any
+Apple Silicon Mac. Many people already have it without knowing.
+
+### Will reinstalling the printer driver fix "Filter failed"?
+
+No. The downloaded driver isn't corrupt — it's Intel software, and reinstalling it just puts the
+same Intel software back. This is the single biggest time-waster with this problem. Install
+Rosetta 2 instead.
+
+### Does this affect USB printing, Wi-Fi printing, or both?
+
+Both. USB and network printing use different *transports* but the same *driver filter*, and the
+filter is what's failing. A printer that works over USB in the vendor's utility but fails from
+Preview over both USB and Wi-Fi is the classic signature.
+
+### Why does the manufacturer's own app connect fine while macOS can't print?
+
+The vendor's utility talks to the printer directly, over USB or the network. It never goes through
+CUPS and never runs the CUPS filter. So it connects, tests, and configures perfectly while every
+normal print job fails. A successful connection test only proves your hardware and cabling are
+fine — which is useful, because it rules them out.
+
+### Does Rosetta 2 slow down printing?
+
+Not noticeably. The translated code only converts a page image into printer commands — a tiny amount
+of work next to the printing itself. Rosetta also caches translations after first run.
+
+### Do I need to reinstall Rosetta after a macOS update?
+
+Usually no; it persists across updates. If a major upgrade seems to have removed it, re-running
+`softwareupdate --install-rosetta` is harmless and takes seconds.
+
+### Is Rosetta 2 going away?
+
+Yes. macOS 27 is the last version with full Rosetta 2 support. From macOS 28 it's limited to legacy
+game frameworks, so Intel-only printer drivers will stop working entirely. See
+[The Rosetta 2 deadline](#the-rosetta-2-deadline).
+
+### My printer isn't a FreeX. Does this still apply?
+
+Yes, if its driver ships an Intel-only CUPS filter — common for budget thermal label printers whose
+Mac drivers haven't been rebuilt since 2020. The diagnosis and fix are identical; only the filter
+name differs. See [docs/other-printers.md](docs/other-printers.md).
+
+### Can I print without the vendor driver at all?
+
+Sometimes. Many of these printers accept raw commands on TCP port 9100 (often TSPL or ESC/POS), and
+some work with a generic driver for that language. It's fiddly and worth it only if no native driver
+exists. See [docs/technical-notes.md](docs/technical-notes.md) — clearly marked experimental.
+
+### Where is the CUPS error log on macOS?
+
+`/var/log/cups/error_log`. Read it with `sudo tail -n 100 /var/log/cups/error_log`. For more detail,
+enable debug logging first with `sudo cupsctl --debug-logging`, reproduce the failure, then turn it
+off with `sudo cupsctl --no-debug-logging`.
+
+---
+
+## Technical notes
+
+**[docs/technical-notes.md](docs/technical-notes.md)** covers how the PPD, the CUPS filter, and the
+print chain fit together; how the architecture mismatch was traced through `cupsctl --debug-logging`;
+what `strings` on the FreeX filter reveals about its TSC/TSPL command set (`SIZE`, `GAP`, `DENSITY`,
+`BITMAP`, `PRINT`); and generalisable lessons for debugging any Intel-only vendor component on
+Apple Silicon.
+
+It also documents an **experimental** direct-to-port-9100 approach explored before the real cause was
+found. **That is not a recommended solution** — once Rosetta 2 is installed the official driver works
+normally and there's no reason to bypass it.
+
+---
+
+## Contributing
+
+If this fixed your printer — or if your model, brand, or macOS version needs a different step —
+please open an issue or pull request. Reports from **non-FreeX printers are especially welcome**, so
+this can list more confirmed cases.
+
+**Do not include private information in issues.** No Wi-Fi network names or passwords, no local IP
+addresses, no printer serial numbers, no shipping labels, no customer names or addresses, no order or
+tracking numbers. Use placeholders like `YOUR_WIFI_NAME`, `192.168.1.100`, and `YOUR_MAC_USERNAME`,
+and redact log excerpts before posting.
+
+---
+
+## Disclaimer
+
+- This is an **independent community troubleshooting guide**. It is **not affiliated with, endorsed
+  by, or supported by** FreeX, Apple, or any printer manufacturer.
+- FreeX and all other trademarks belong to their respective owners, and are used here only to
+  identify the hardware and software this guide applies to.
+- **No proprietary drivers, firmware, or binaries are distributed here.** Obtain those only from
+  official sources.
+- **Firmware updates can permanently brick a thermal printer** if the wrong file is used or power is
+  interrupted. Nothing in this guide requires a firmware update. Don't flash firmware from unofficial
+  sources.
+- Provided as-is, without warranty. You are responsible for changes you make to your own system.
+  See [LICENSE](LICENSE).
+
+---
+
+<sub>Keywords: FreeX printer not working on Mac · FreeX WiFi Thermal Label Printer macOS driver ·
+FreeX thermal printer Apple Silicon · FreeX M1 M2 M3 M4 · rastertoFreeX · FreeX WiFi Toolbox ·
+FreeX 4x6 shipping labels · macOS "Filter failed" fix · "The printer software is not compatible with
+this device" · Bad CPU type in executable · Rosetta 2 printer driver · CUPS filter x86_64 · thermal
+label printer macOS · TSPL port 9100</sub>

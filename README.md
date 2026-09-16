@@ -628,10 +628,21 @@ Wi-Fi-specific is configuring the wireless credentials in the Toolbox.
 *The installed driver list. **FreeX WiFi Thermal Printer** sits between Epson and HP. If it isn't
 listed at all, the driver package didn't install — run the `.pkg` again before going further.*
 
+> **These two screenshots were taken with only FreeX's own driver installed.** If you have also
+> installed the [native filter](native-filter/), you will see a **second** entry,
+> **FreeX WiFi Thermal Printer (Native)**. The two look almost identical, so check for the
+> `(Native)` suffix and pick deliberately:
+>
+> | Entry | Which driver | Needs Rosetta |
+> | --- | --- | --- |
+> | `FreeX WiFi Thermal Printer` | FreeX's own, Intel-only | yes — and stops working at macOS 28 |
+> | `FreeX WiFi Thermal Printer (Native)` | this project's script | no |
+
 ![The Printer Software window with FreeX typed into the filter box, narrowing the list to FreeX WiFi Thermal Printer](docs/images/select-printer-software.png)
 
 *Faster: type `FreeX` in the filter box, select it, click **OK**. This is the step people skip — and
-skipping it is what leaves macOS on a generic driver.*
+skipping it is what leaves macOS on a generic driver. With the native filter installed, this same
+list shows two FreeX entries — see the note above.*
 
 **Do not accept a generic driver.** If macOS auto-fills *Generic PostScript Printer* or *Generic PCL
 Printer*, change it. A thermal label printer understands neither PostScript nor PCL, and a generic
@@ -656,7 +667,8 @@ never uses the CUPS driver that fails.*
 ![FreeX Printer Information window reporting Printer Status: Ready over USB](docs/images/toolbox-printer-info.png)
 
 *"Show Printer Info" reading the hardware successfully. Useful confirmation that the printer and
-cable are fine — and a reminder that this proves nothing about macOS printing.*
+cable are fine — and a reminder that this proves nothing about macOS printing. The Toolbox behaves
+the same whichever driver you use; it never touches the CUPS filter.*
 
 **FreeX Setup → WiFi**
 
@@ -719,7 +731,9 @@ Connection to 192.168.1.100 port 9100 [tcp/hp-pdl-datastr] succeeded!
 
 ![Add Printer IP tab filled in with address 192.168.1.100, HP Jetdirect - Socket, blank queue, and FreeX WiFi Thermal Printer as the driver](docs/images/add-printer-ip.png)
 
-*Queue stays blank. **Use** must be the FreeX driver, not a generic one.*
+*Queue stays blank. **Use** must be a FreeX driver, not a generic one. This screenshot shows the
+vendor driver; if you're using the [native filter](native-filter/), choose
+**FreeX WiFi Thermal Printer (Native)** here instead — everything else is identical.*
 
 **"HP Jetdirect – Socket" is correct**, and has nothing to do with HP. It's simply macOS's name for
 raw TCP printing on port 9100, which is what these printers speak. Don't use IPP, LPD, or AirPrint.

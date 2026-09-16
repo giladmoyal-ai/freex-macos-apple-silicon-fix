@@ -297,6 +297,10 @@ ping -c 3 192.168.1.100
 
 ![Add Printer IP tab with HP Jetdirect - Socket selected and the FreeX driver chosen under Use](images/add-printer-ip.png)
 
+*Shown with FreeX's own driver. If you've installed the
+[native filter](../native-filter/), pick **FreeX WiFi Thermal Printer (Native)** under **Use**
+instead — the address, protocol and blank queue are the same either way.*
+
 **Why "HP Jetdirect – Socket"?** It is just macOS's label for raw TCP printing on port 9100. It has
 nothing to do with HP hardware and is the correct protocol for this printer. Do not use IPP, LPD, or
 AirPrint.

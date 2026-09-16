@@ -83,6 +83,8 @@ easier to undo.
 
 Power the printer off and on.
 
+![The Printer Restart Required dialog describing the power-cycle and configuration label](images/printer-restart-dialog.png)
+
 On startup it should print a small **configuration label** showing:
 
 - its assigned **IP address**
@@ -138,6 +140,8 @@ ping -c 3 192.168.1.100
 | Use | **Select Software…** → **FreeX WiFi Thermal Printer** |
 
 3. Click **Add**.
+
+![Add Printer IP tab with HP Jetdirect - Socket selected and the FreeX driver chosen under Use](images/add-printer-ip.png)
 
 **Why "HP Jetdirect – Socket"?** It is just macOS's label for raw TCP printing on port 9100. It has
 nothing to do with HP hardware and is the correct protocol for this printer. Do not use IPP, LPD, or

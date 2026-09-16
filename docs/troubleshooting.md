@@ -34,6 +34,8 @@ bash scripts/diagnose_freex_macos.sh --all
 
 ## "The printer software is not compatible with this device"
 
+![macOS print queue showing the printer software is not compatible with this device](images/printer-queue-not-compatible.png)
+
 **What macOS means:** CUPS could not run the vendor's filter program for this printer.
 
 **What "this device" means:** your **Mac**, not your printer. The wording is misleading — it sounds
@@ -60,6 +62,8 @@ printer.
 ---
 
 ## "Filter failed"
+
+![macOS print queue showing Filter failed and the printer marked Software Incompatible](images/printer-queue-filter-failed.png)
 
 Shown in the print queue window. Same root cause — the job reached the filter stage and the filter
 couldn't be executed. The queue usually pauses itself afterwards.

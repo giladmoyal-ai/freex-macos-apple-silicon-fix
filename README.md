@@ -44,10 +44,12 @@ FreeX; the diagnosis and fix are vendor-neutral. See [Other printers](docs/other
 - [Not technical? Start here](#not-technical-start-here)
 - [Does this apply to me?](#does-this-apply-to-me)
 - [Symptoms](#symptoms)
+- [Don't trust the "Intel-based Apps" screen](#dont-trust-the-intel-based-apps-screen)
 - [Quick fix (5 minutes)](#quick-fix-5-minutes)
 - [Why this happens](#why-this-happens)
 - [Diagnose it yourself](#diagnose-it-yourself)
 - [The full fix](#the-full-fix)
+- [Setting up a FreeX printer from scratch](#setting-up-a-freex-printer-from-scratch)
 - [Which connection are you using?](#which-connection-are-you-using)
 - [USB setup](#usb-setup)
 - [Wi-Fi setup](#wi-fi-setup)
@@ -154,6 +156,15 @@ Prefer a full report? Use the [diagnostic script](#option-a--run-the-diagnostic-
 ## Symptoms
 
 You almost certainly have this problem if **all** of these are true:
+
+![macOS print queue showing the error "The printer software is not compatible with this device"](docs/images/printer-queue-not-compatible.png)
+
+*This is the error most people see first. "This device" means your **Mac**, not your printer.*
+
+![macOS print queue showing "Filter failed" on a stuck job and the printer marked Software Incompatible](docs/images/printer-queue-filter-failed.png)
+
+*The same failure with a job in the queue: "Filter failed", and the printer marked **Software
+Incompatible** in the sidebar. Both messages have one cause.*
 
 - You are on an **Apple Silicon** Mac (Apple M1, M2, M3, M4 or later) — not Intel.
 - The printer itself **works**: it powers on, self-tests, feeds labels, and the vendor's own utility
@@ -315,6 +326,33 @@ find /Library /usr/libexec -type f -name 'rastertoFreeX' 2>/dev/null \
 
 `arm64` in step 1 + any output from step 2 + "NOT installed" in step 3 = this is your problem.
 
+### Don't trust the "Intel-based Apps" screen
+
+macOS 27 has a screen at  → **About This Mac** → **Intel-based Apps** → **Details…**:
+
+![About This Mac showing Apple M4, macOS Golden Gate 27.0, and an Intel-based Apps row](docs/images/about-this-mac.png)
+
+![The Support Ending for Intel-based Apps dialog, listing one unrelated Intel app](docs/images/intel-based-apps-dialog.png)
+
+**This screen cannot tell you whether Rosetta 2 is installed, and it will never list your printer
+driver.** It shows Intel *applications* you have launched. CUPS filters are background components,
+so they never appear here.
+
+This is a genuine trap. In the session this guide came from, seeing an unrelated Intel app listed
+here led to the conclusion "Rosetta is present and working" — which was **wrong**, and cost hours of
+unnecessary work reverse-engineering the printer protocol. Rosetta was not installed at all.
+
+Use the real check instead:
+
+```bash
+/usr/bin/pgrep -q oahd && echo "Rosetta installed" || echo "Rosetta NOT installed"
+```
+
+The screen *is* useful for one thing: it confirms Apple's deadline in writing — *"Intel-based apps
+running on Rosetta will not open in macOS 28."*
+
+---
+
 ### Option C — confirm it in the CUPS log
 
 The definitive proof:
@@ -438,6 +476,87 @@ Never take FreeX drivers or firmware from third-party "driver download" sites.
 
 ---
 
+## Setting up a FreeX printer from scratch
+
+Brand new printer, nothing installed yet? Follow this order and you will never see the errors this
+guide is about.
+
+> ### ⚡ Install Rosetta 2 *before* you add the printer
+>
+> On an Apple Silicon Mac this single step prevents the entire problem. The FreeX driver needs
+> Rosetta, and a printer queue created **before** Rosetta is installed stays broken even after you
+> install it — you have to delete and recreate it. One command up front saves the whole cycle:
+>
+> ```bash
+> softwareupdate --install-rosetta
+> ```
+
+### 1. Load the labels and calibrate
+
+1. Connect power, switch the printer on.
+2. Open the cover and drop in the label roll — these printers feed **labels facing up**, off the top
+   of the roll.
+3. Slide the paper guides so they touch the roll without pinching it.
+4. Close the cover until it clicks on **both** sides. A cover latched on only one side causes
+   skewed or blank labels.
+5. **Calibrate the gap sensor:** with the printer idle, hold the feed button until it advances a
+   couple of labels and stops cleanly at a label edge.
+
+If it feeds continuously or stops mid-label, the sensor has not found the gap — reseat the roll and
+repeat. **A printer that cannot detect label gaps prints nothing, however perfect your Mac setup
+is.** Do this before you touch the Mac.
+
+### 2. Download the FreeX software
+
+Get it from FreeX directly — see
+[Official FreeX downloads and resources](#official-freex-downloads-and-resources). Unzip it and you
+should see exactly two items:
+
+![Finder showing the unzipped FreeX package containing the driver pkg and the WiFi Toolbox app](docs/images/driver-package-contents.png)
+
+- **`FreeX Driver for MacOS v1.3.pkg`** — installs the PPD and the CUPS filter. This is the part
+  that needs Rosetta.
+- **`FreeX WiFi Toolbox for MacOS v1.3.app`** — configures the printer's Wi-Fi and network
+  settings. This app is a **universal** binary and runs natively; it is not the part that breaks.
+
+Note the driver's date: **April 2021** — months before Apple Silicon Macs were widely shipping. That
+date is the root of everything else in this guide.
+
+### 3. Install Rosetta 2 — Apple Silicon only
+
+```bash
+softwareupdate --install-rosetta
+```
+
+Type **A** and press Return to accept the licence. Under a minute, no restart. Skip this only if
+`uname -m` prints `x86_64` (an Intel Mac).
+
+### 4. Install the driver
+
+Double-click **`FreeX Driver for MacOS v1.3.pkg`** and go through the installer. If macOS asks you
+to approve software from an unidentified developer, allow it in **System Settings → Privacy &
+Security**.
+
+Don't open the Toolbox or add the printer yet.
+
+### 5. Add the printer over USB first
+
+Even if you intend to print over Wi-Fi, **get USB working first.** It isolates variables: if USB
+works and Wi-Fi doesn't, the problem is genuinely networking.
+
+Follow [USB setup](#usb-setup), then print a test label.
+
+### 6. Then set up Wi-Fi, if you want it
+
+Only once USB prints correctly, follow [Wi-Fi setup](#wi-fi-setup) and
+[Add a Wi-Fi printer on macOS](#add-a-wi-fi-printer-on-macos).
+
+### 7. Make 4x6 the default
+
+See [4x6 label defaults](#4x6-label-defaults) so you are not changing paper size on every print.
+
+---
+
 ## Which connection are you using?
 
 There are three ways to connect a label printer, and it's worth being clear which one you have,
@@ -482,6 +601,10 @@ Wi-Fi-specific is configuring the wireless credentials in the Toolbox.
 5. Pick your printer's driver — for FreeX, **FreeX WiFi Thermal Printer**.
 6. Click **Add**.
 
+![The Printer Software window with "free" typed in the search box and FreeX WiFi Thermal Printer selected](docs/images/select-printer-software.png)
+
+*Step 5 is the one people skip. Search `free`, select **FreeX WiFi Thermal Printer**, click OK.*
+
 **Do not accept a generic driver.** If macOS auto-fills *Generic PostScript Printer* or *Generic PCL
 Printer*, change it. A thermal label printer understands neither PostScript nor PCL, and a generic
 driver produces "Filter failed" or pages of garbage.
@@ -496,6 +619,16 @@ see [step 3 above](#3-recreate-the-printer-queue).
 Full walkthrough: **[docs/wifi-setup.md](docs/wifi-setup.md)**. Summary for FreeX:
 
 Connect by **USB first** — the Toolbox configures Wi-Fi *through* the USB connection.
+
+![FreeX WiFi Toolbox main window with the printer listed and Connection Test available](docs/images/toolbox-main-window.png)
+
+*The Toolbox connects over USB. **This working does not mean printing will work** — the Toolbox
+never uses the CUPS driver that fails.*
+
+![FreeX Printer Information window reporting Printer Status: Ready over USB](docs/images/toolbox-printer-info.png)
+
+*"Show Printer Info" reading the hardware successfully. Useful confirmation that the printer and
+cable are fine — and a reminder that this proves nothing about macOS printing.*
 
 **FreeX Setup → WiFi**
 
@@ -515,8 +648,12 @@ Connect by **USB first** — the Toolbox configures Wi-Fi *through* the USB conn
 | DHCP | `Enable` |
 | Port | `9100` |
 
-Apply, then **restart the printer**. It prints a small configuration label showing its IP address,
-the network it joined, and port `9100`.
+Apply, then **restart the printer**:
+
+![The Printer Restart Required dialog listing the final steps after configuring the network](docs/images/printer-restart-dialog.png)
+
+It prints a small configuration label showing its IP address, the network it joined, and port
+`9100`.
 
 > **These printers are 2.4 GHz only.** If your router broadcasts one merged name for 2.4 GHz and
 > 5 GHz, that is the most common reason setup fails.
@@ -547,6 +684,10 @@ Connection to 192.168.1.100 port 9100 [tcp/hp-pdl-datastr] succeeded!
 | Use | **Select Software…** → your printer's driver |
 
 3. Click **Add**.
+
+![Add Printer IP tab filled in with address 192.168.1.100, HP Jetdirect - Socket, blank queue, and FreeX WiFi Thermal Printer as the driver](docs/images/add-printer-ip.png)
+
+*Queue stays blank. **Use** must be the FreeX driver, not a generic one.*
 
 **"HP Jetdirect – Socket" is correct**, and has nothing to do with HP. It's simply macOS's name for
 raw TCP printing on port 9100, which is what these printers speak. Don't use IPP, LPD, or AirPrint.

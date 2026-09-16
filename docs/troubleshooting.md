@@ -186,7 +186,8 @@ points at the old one.
 
 **Permanent fix:** set a **DHCP reservation** on your router, bound to the printer's MAC address.
 Leave DHCP enabled on the printer and let the router pin the address — more reliable and easier to
-undo than a static IP set on the printer.
+undo than a static IP set on the printer. Step-by-step, including eero and the IPv6 trap:
+[Stop the IP address from changing](wifi-setup.md#stop-the-ip-address-from-changing).
 
 Also check:
 

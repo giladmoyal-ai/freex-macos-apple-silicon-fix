@@ -850,7 +850,7 @@ Full detail in **[docs/troubleshooting.md](docs/troubleshooting.md)**.
 | `nc -vz IP 9100` succeeds but nothing prints | Network is fine; the filter is failing | It's the Rosetta problem, not a network problem |
 | Reinstalled the driver repeatedly, no change | Reinstalling an Intel binary yields an Intel binary | Install Rosetta |
 | USB queue still errors after installing Rosetta | Stale queue created pre-Rosetta | Remove the printer, add it again |
-| Worked yesterday, dead today (Wi-Fi) | DHCP gave the printer a new IP | Reprint the config label; reserve the IP on your router |
+| Worked yesterday, dead today (Wi-Fi) | DHCP gave the printer a new IP | [Reserve the printer's IP on your router](docs/wifi-setup.md#stop-the-ip-address-from-changing) — the most common delayed failure |
 | Labels tiny, shifted, or on a huge blank page | App defaulted to Letter | Use a saved 4x6 preset |
 
 ---

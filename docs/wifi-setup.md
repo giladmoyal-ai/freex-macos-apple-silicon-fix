@@ -154,13 +154,77 @@ lpstat -v
 Look for the line naming your FreeX printer — the address is in it, like
 `socket://192.168.1.100:9100`.
 
-### The address keeps changing
+---
 
-Most routers hand out addresses temporarily (DHCP), so the printer's IP can
-change after a power cut or router restart — and then macOS can no longer find
-it. The permanent fix is a **DHCP reservation**: in your router's app, find the
-printer and choose "reserve this IP" (wording varies). Leave DHCP **enabled on
-the printer** and let the router pin the address.
+## Stop the IP address from changing
+
+**This is the single most common reason a Wi-Fi label printer "randomly stops
+working" weeks after a successful setup.** Worth ten minutes now.
+
+### Why it happens
+
+Your router hands out addresses on a lease (DHCP). The printer gets, say,
+`192.168.1.100`, and macOS stores **that exact address** in the print queue.
+
+Then the lease expires, or the router restarts, or the printer is off for a few
+days — and the router gives it a different address. macOS is still pointing at
+the old one, so jobs sit in the queue or fail. Nothing is broken; the Mac is
+knocking on the wrong door.
+
+### How to recognise it
+
+- Printing worked fine, then stopped with no change on your part
+- The printer is powered on, connected, and its status light looks normal
+- `nc -vz OLD_IP 9100` now fails, where it used to succeed
+- Restarting the printer makes it print a config label with a **different** IP
+  than the one in your printer queue
+
+If USB still prints but Wi-Fi doesn't, this is almost certainly the cause.
+
+### The fix: reserve the address
+
+A **DHCP reservation** tells the router "always give this device the same
+address." The printer keeps using DHCP, so nothing changes on the printer side —
+the router just always answers with the same number.
+
+**Do this before reserving:** make sure the printer currently **has** a working
+IPv4 address (something like `192.168.1.100`). If it doesn't, some routers will
+try to reserve its IPv6 link-local address instead — a long value starting
+`fe80:` — which does nothing useful. Restart the printer, confirm it prints a
+config label showing an IPv4 address, and only then create the reservation.
+
+#### On eero
+
+1. Open the **eero** app
+2. Tap **Devices** and find the printer (look for `FreeX`, `RT-Label`, or an
+   unfamiliar device; match the MAC address from the Toolbox if unsure)
+3. Tap the device, then **Reservations & port forwarding**
+4. Tap **Add a reservation**
+5. Check the address it offers is an **IPv4** one (`192.168.x.x`), not `fe80:...`
+6. Save
+
+#### On other routers
+
+The wording differs but the feature is the same. Look under **DHCP
+reservation**, **Address reservation**, **Static lease**, or **Bind IP to MAC**,
+usually inside LAN or DHCP settings. Pick the printer from the device list and
+save.
+
+### Don't set a static IP on the printer instead
+
+The Toolbox lets you switch **FreeX Setup → Ethernet** from DHCP to a fixed IP.
+Avoid it unless you know your network well: if you pick an address the router
+later hands to something else, you get an address conflict where both devices
+misbehave intermittently — much harder to diagnose than the original problem.
+
+A router-side reservation achieves the same result safely, and is easy to undo.
+
+### If the address already changed
+
+1. Restart the printer and read the IP from the label it prints
+2. Remove the Wi-Fi printer in **System Settings → Printers & Scanners**
+3. Add it again with the new address ([Step 5](#step-5--add-the-printer-in-macos))
+4. Then create the reservation so it doesn't recur
 
 ---
 

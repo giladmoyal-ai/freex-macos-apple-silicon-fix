@@ -612,6 +612,32 @@ Wi-Fi-specific is configuring the wireless credentials in the Toolbox.
 > **"Wi-Fi" and "LAN" both mean network printing here.** Wi-Fi is a wireless LAN; Ethernet is a wired
 > LAN. Once the printer has an IP address, macOS doesn't care how it got there.
 
+### Which should you actually use?
+
+**If the printer sits next to the Mac and you print labels for a living, use USB.**
+
+Both work, and print identically — the same filter produces the same bytes either way. But they fail
+differently, and USB has far less that can go wrong:
+
+| | USB | Wi-Fi |
+| --- | --- | --- |
+| Depends on an IP address | no | **yes** |
+| Breaks when the DHCP lease changes | no | **yes**, unless reserved |
+| Breaks if another device serves DHCP | no | **yes** — see [rogue DHCP](docs/troubleshooting.md#the-printer-got-an-address-on-a-completely-different-network) |
+| Breaks if Wi-Fi drops or the router reboots | no | **yes** |
+| Printer can sit anywhere | no | **yes** |
+
+Every network failure documented in this guide — a lease moving, a second DHCP server handing out
+addresses, a queue pointing at an address nothing answers on — applies **only to Wi-Fi**. A USB queue
+has no address to be wrong about.
+
+Wi-Fi is worth it when the printer needs to live away from the Mac, or be shared. If you use it,
+[reserve the address on your router](docs/wifi-setup.md#stop-the-ip-address-from-changing) — that
+removes the most common failure.
+
+**Best of both:** set up *both* queues. They cost nothing, they use the same driver, and if one path
+breaks mid-shipping you switch printers in the print dialog instead of troubleshooting.
+
 ---
 
 ## USB setup

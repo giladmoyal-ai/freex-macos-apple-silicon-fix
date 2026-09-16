@@ -95,6 +95,13 @@ lpoptions -p YOUR_QUEUE_NAME -o freex-threshold=110 -o freex-density=10
 - `BITMAP` payload length matches its declared geometry exactly
 - Multi-page jobs, copies, and banding
 
+**Also observed in continued use:**
+
+Over a run of subsequent network problems — a DHCP lease moving, and a second DHCP server on the LAN
+handing the printer an address on the wrong subnet — **the filter itself never failed**. Every
+failure was at the network layer, surfacing as "the printer may not exist or is unavailable", and
+printing resumed the moment the printer was reachable again. The USB queue kept working throughout.
+
 **Not yet verified:**
 
 - Other printer models and firmware revisions

@@ -182,8 +182,26 @@ Go back to the Rosetta check. A network test cannot diagnose a filter problem.
 
 ## My Wi-Fi queue stopped working
 
-Almost always: **the printer's DHCP lease expired and it got a new IP**, while the macOS queue still
-points at the old one.
+There are **two** distinct causes, and they need different fixes. Check which one you have first:
+
+```bash
+# what address does the queue expect?
+lpstat -v | grep -i freex
+# restart the printer, read the IP from the label it prints, and compare
+```
+
+**If the printer's new address is on the same subnet** (both `192.168.1.x`, say) — the DHCP lease
+expired and it got a different address. That is the common case, covered below.
+
+**If the printer's address is on a different subnet** (your Mac on `192.168.1.x`, the printer on
+`192.168.3.x`) — something other than your router is handing out addresses, usually macOS Internet
+Sharing. A router reservation **cannot** fix that one. See
+[the printer got an address on a completely different network](#the-printer-got-an-address-on-a-completely-different-network).
+
+---
+
+For the common case: **the printer's DHCP lease expired and it got a new IP**, while the macOS queue
+still points at the old one.
 
 1. Restart the printer — most print a configuration label showing the current IP
 2. Compare it to the address in System Settings → Printers & Scanners → your printer

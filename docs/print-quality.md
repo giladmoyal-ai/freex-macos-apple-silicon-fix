@@ -50,9 +50,46 @@ quality drops.
 
 ### You need
 
-- **99% isopropyl alcohol** (not 70% — the water content leaves residue)
+- **99% isopropyl alcohol** (70% works, it just needs longer to dry)
 - A **lint-free** swab, cotton bud or microfibre cloth
+- Optionally, a can of **compressed air** — see [blowing out dust](#blow-out-the-dust-first)
 - Nothing else. No water, no household cleaner, no ammonia
+
+### Can I use alcohol wipes?
+
+**It depends entirely on what is in them.** Read the packet.
+
+| Product | Use it? | Why |
+| --- | --- | --- |
+| **Alcohol prep pads** / isopropyl wipes | ✅ Yes | Isopropyl and nothing else. Squeeze out the excess — damp, not soaked. 70% is fine, just dry it longer. |
+| **99% isopropyl + cotton bud** | ✅ Best | No water, no additives, and you control how damp it is |
+| Thermal head **cleaning pen** or **cleaning card** | ✅ Yes | Purpose-made; a card feeds through like a label and does head and roller in one pass |
+| **Disinfecting wipes** (Clorox, Lysol, Wet Ones) | ❌ No | Bleach or quaternary ammonium plus surfactants — leaves residue and attacks the head coating |
+| Wipes with **aloe, moisturiser or fragrance** | ❌ No | The additives leave a sticky film exactly where you least want one |
+| **Hand sanitiser** | ❌ No | Glycerin residue |
+| **Baby / screen / glasses wipes** | ❌ No | Water or unidentified solvents |
+
+**The rule:** if the ingredients say *isopropyl alcohol* and essentially nothing
+else, it is safe. If the packet mentions disinfecting, moisturising or scent,
+keep it away from the print head.
+
+### Blow out the dust first
+
+Label stock sheds paper dust, and it collects in the paper path and on the gap
+sensor. Clear it **before** wiping, so you are not dragging grit across the head.
+
+A can of compressed air, or a rubber air blower of the sort sold for camera
+lenses, is ideal.
+
+- **Hold the can upright.** Tilting or shaking it sprays liquid propellant, which
+  is intensely cold and can crack or freeze components.
+- Use **short bursts** from **15–20 cm (6–8 in) away**, not one long blast.
+- Aim along the paper path, around the roller, and at the gap sensor.
+- Do it somewhere you don't mind dust going — otherwise you are just relocating
+  it.
+
+> Compressed air removes **dust**. It does nothing to **adhesive**, which is what
+> causes smearing. Blow the dust out first, then wipe with alcohol.
 
 ### Steps
 
@@ -60,6 +97,9 @@ quality drops.
 2. **Let it cool for a few minutes.** The head runs hot and is easier to damage
    warm.
 3. Open the cover and **remove the label roll**.
+   Give the paper path a few short bursts of
+   [compressed air](#blow-out-the-dust-first) to clear loose dust before you
+   start wiping.
 4. Find the **print head**: a thin dark strip running the full width of the
    paper path, usually on the underside of the lid where the label passes.
 5. Dampen the swab with alcohol — **damp, not dripping**.
@@ -112,8 +152,12 @@ replacing — cleaning will not bring it back.
 A small sensor in the paper path that finds the gaps between labels. Dust or
 adhesive on it causes mis-positioned print or endless label feeding.
 
-Blow it out with a puff of air, or wipe very gently with a dry lint-free swab.
-Then [recalibrate](#recalibrate-the-gap-sensor).
+Give it a couple of short bursts of compressed air — can held **upright**, from a
+few inches away — or wipe very gently with a dry lint-free swab. Then
+[recalibrate](#recalibrate-the-gap-sensor).
+
+This is the part most worth blowing out regularly: it is small, recessed, and
+paper dust settles straight into it.
 
 ---
 
@@ -182,8 +226,8 @@ documentation for yours.
 
 | When | Do |
 | --- | --- |
-| Every roll change | Quick wipe of the print head with alcohol |
-| Monthly, or heavy use | Head **and** platen roller, plus blow out the sensor |
+| Every roll change | Puff of air down the paper path, then wipe the head with alcohol |
+| Monthly, or heavy use | Head **and** platen roller, plus blow out the sensor and paper path |
 | Quality drops suddenly | Head first — it fixes it most of the time |
 | After a paper jam | Head and roller; jams leave adhesive behind |
 

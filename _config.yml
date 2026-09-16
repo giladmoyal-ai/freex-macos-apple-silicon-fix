@@ -9,7 +9,7 @@
 #   jekyll-optional-front-matter - processes .md files that have no front matter
 #   jekyll-seo-tag             - emits title/description/canonical/OpenGraph tags
 
-title: FreeX Thermal Printer on Apple Silicon Mac
+title: FreeX Printer Troubleshooting Guide
 description: >-
   Fix "Filter failed" and "The printer software is not compatible with this
   device" for FreeX and other thermal label printers on Apple Silicon Macs

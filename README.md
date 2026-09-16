@@ -10,9 +10,10 @@ softwareupdate --install-rosetta
 That fixes it in about five minutes. This guide explains how to confirm that's your problem, how to
 fix it properly over USB and Wi-Fi, and what to do when Rosetta 2 goes away.
 
-![Platform](https://img.shields.io/badge/platform-macOS%2011%E2%80%9327-lightgrey)
-![Apple Silicon](https://img.shields.io/badge/Apple%20Silicon-M1%20%C2%B7%20M2%20%C2%B7%20M3%20%C2%B7%20M4-black)
-![License](https://img.shields.io/badge/license-MIT-blue)
+[![Platform: macOS 11 to 27](https://img.shields.io/badge/platform-macOS%2011%E2%80%9327-lightgrey)](#the-rosetta-2-deadline)
+[![Apple Silicon M1 M2 M3 M4](https://img.shields.io/badge/Apple%20Silicon-M1%20%C2%B7%20M2%20%C2%B7%20M3%20%C2%B7%20M4-black)](#does-this-apply-to-me)
+[![Permanent fix: native driver](https://img.shields.io/badge/permanent%20fix-native%20driver-brightgreen)](native-filter/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
 > **⏳ Rosetta 2 is going away — and there's a permanent fix here too.**
 > macOS 27 is the **last** release with full Rosetta 2. From macOS 28, Intel-only printer drivers

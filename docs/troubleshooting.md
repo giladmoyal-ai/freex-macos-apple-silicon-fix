@@ -26,6 +26,8 @@ bash scripts/diagnose_freex_macos.sh --all
 - [The queue I made before installing Rosetta still errors](#the-queue-i-made-before-installing-rosetta-still-errors)
 - [Labels print at the wrong size or on a huge blank page](#labels-print-at-the-wrong-size-or-on-a-huge-blank-page)
 - [Labels print at a different size or with different borders every time](#labels-print-at-a-different-size-or-with-different-borders-every-time)
+  - [There is a *second* scaling control](#there-is-a-second-scaling-control)
+  - [Presets are per printer](#presets-are-per-printer)
   - [The setting that silently undoes your preset](#the-setting-that-silently-undoes-your-preset)
 - [Nothing prints and there's no error at all](#nothing-prints-and-theres-no-error-at-all)
 - [The printer pauses itself after every job](#the-printer-pauses-itself-after-every-job)
@@ -318,6 +320,37 @@ saved — it just is not selected any more.
 
 With it unchecked, macOS remembers the last preset you used, per printer.
 
+### There is a *second* scaling control
+
+macOS has two independent "scale to fit" settings, in different sections of the
+same dialog, and both must be right:
+
+| Section | Setting | Should be |
+| --- | --- | --- |
+| **Preview** | Scale / Scale to Fit | **Scale: 100%** |
+| **Paper Handling** | Scale to Fit Paper Size | **off** |
+
+If **Paper Handling -> Scale to Fit Paper Size** is switched on, it resizes your
+page to whatever **Destination Paper Size** says underneath it — which is often a
+leftover value like `100mmx150mm` while the top of the dialog says `4.00x6.00"`.
+The page then gets scaled even though Preview's own scale is 100%.
+
+Leave that toggle **off**. While it is off, Destination Paper Size is greyed out
+and ignored, whatever it happens to say.
+
+Chasing one of these while the other is wrong is what makes this so maddening to
+diagnose.
+
+### Presets are per printer
+
+A preset saved on one queue does **not** appear on another. If you have both a
+USB and a Wi-Fi queue for the same printer, you must save `FreeX 4x6` **twice**,
+once from each.
+
+That is why a printer can be perfectly configured on Wi-Fi and still print wrong
+over USB — the Presets menu simply says "Default Settings" on the queue you
+haven't set up yet.
+
 ### Printing that cannot drift
 
 The print dialog will always be somewhere a stray click changes your output. For
@@ -419,6 +452,17 @@ If the configuration has become a mess, reset in this order:
 
 Fixing USB first isolates variables: if USB works and Wi-Fi doesn't, the problem is genuinely
 network-related. If neither works, it's the filter/Rosetta problem.
+
+---
+
+## Print quality: streaks, smearing, faded labels
+
+Those are hardware problems, not driver problems — a dirty print head or platen
+roller causes most of them, and a cotton swab with isopropyl alcohol fixes it.
+
+See **[print-quality.md](print-quality.md)** for a symptom table, cleaning
+instructions, darkness and speed guidance, and what to do when the head is
+genuinely worn out.
 
 ---
 

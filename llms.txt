@@ -52,6 +52,9 @@ file /usr/libexec/cups/filter/* | grep -i x86_64 | grep -vi arm64     # any hit 
 - [Other printers](docs/other-printers.md): applying the same diagnosis and fix to any brand;
   identifying a printer's filter; generic driver options by printer language (TSPL, ZPL, EPL,
   ESC/POS, PostScript, PCL, IPP Everywhere); what to do when no native driver exists.
+- [Print quality](docs/print-quality.md): streaks, smearing, faded or blurry labels, cleaning the
+  thermal print head and platen roller with isopropyl alcohol, darkness and speed settings, direct
+  thermal media, gap sensor calibration, and when a print head is worn out rather than dirty.
 - [Technical notes](docs/technical-notes.md): how CUPS filters work, tracing the failure with
   `cupsctl --debug-logging`, the TSPL/TSC command set found inside the FreeX filter, and an
   experimental direct-to-port-9100 approach that is documented but not recommended.

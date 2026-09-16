@@ -193,22 +193,46 @@ try to reserve its IPv6 link-local address instead — a long value starting
 `fe80:` — which does nothing useful. Restart the printer, confirm it prints a
 config label showing an IPv4 address, and only then create the reservation.
 
-#### On eero
+#### The steps are the same on every router
+
+Whatever router or mesh system you have, you are doing three things:
+
+1. **Find the printer** in the router's list of connected devices
+2. **Tell the router to always give it the same address** — a reservation
+3. **Save**
+
+Only the menu names differ. Look for whichever of these your router calls it:
+
+> **DHCP Reservation** · **Address Reservation** · **Reserve IP** ·
+> **Static Lease** · **Static DHCP** · **Bind IP to MAC** · **Fixed Address** ·
+> **Manual Assignment**
+
+It usually lives under **LAN**, **DHCP**, **Network Settings**, or on the
+device's own detail page in a mesh app.
+
+#### Worked example: eero
+
+This is the system this guide was written on, so the steps are exact here. Other
+mesh systems (Google Nest Wifi, Orbi, Deco, Velop, Amplifi) follow the same shape
+with different wording.
 
 1. Open the **eero** app
-2. Tap **Devices** and find the printer (look for `FreeX`, `RT-Label`, or an
-   unfamiliar device; match the MAC address from the Toolbox if unsure)
+2. Tap **Devices** and find the printer — look for `FreeX`, `RT-Label`, or an
+   unfamiliar device. If several look alike, match the **MAC address** shown in
+   the FreeX Toolbox
 3. Tap the device, then **Reservations & port forwarding**
 4. Tap **Add a reservation**
-5. Check the address it offers is an **IPv4** one (`192.168.x.x`), not `fe80:...`
+5. Check the address offered is **IPv4** (`192.168.x.x`), not `fe80:...`
 6. Save
 
-#### On other routers
+#### Can't find a reservation feature at all?
 
-The wording differs but the feature is the same. Look under **DHCP
-reservation**, **Address reservation**, **Static lease**, or **Bind IP to MAC**,
-usually inside LAN or DHCP settings. Pick the printer from the device list and
-save.
+Some ISP-supplied routers hide or omit it. Two fallbacks:
+
+- **Extend the DHCP lease time** (often under LAN/DHCP settings) to a week or
+  more, so the address changes far less often
+- Set a **static IP on the printer** instead — see the warning below, and pick an
+  address well outside the range your router hands out automatically
 
 ### Don't set a static IP on the printer instead
 

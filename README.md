@@ -860,7 +860,8 @@ See [native-filter/README.md](native-filter/README.md) for details, options and 
 
 ## Troubleshooting
 
-Full detail in **[docs/troubleshooting.md](docs/troubleshooting.md)**.
+Full detail in **[docs/troubleshooting.md](docs/troubleshooting.md)**. For streaks, smearing, faded
+labels and print-head cleaning, see **[docs/print-quality.md](docs/print-quality.md)**.
 
 | Symptom | Cause | Fix |
 | --- | --- | --- |
@@ -873,6 +874,7 @@ Full detail in **[docs/troubleshooting.md](docs/troubleshooting.md)**.
 | USB queue still errors after installing Rosetta | Stale queue created pre-Rosetta | Remove the printer, add it again |
 | Worked yesterday, dead today (Wi-Fi) | DHCP gave the printer a new IP | [Reserve the printer's IP on your router](docs/wifi-setup.md#stop-the-ip-address-from-changing) — the most common delayed failure |
 | Labels tiny, shifted, or on a huge blank page | App defaulted to Letter | Use a saved 4x6 preset |
+| Streaks, smearing, faded or blurry labels | Dirty print head or platen roller | [Clean the printer](docs/print-quality.md) — usually five minutes with a cotton swab |
 | Size or borders differ on **every** print | "Scale to Fit" is recalculating, or queue and app disagree on paper size | [Match the sizes and set Scale to 100%](docs/troubleshooting.md#labels-print-at-a-different-size-or-with-different-borders-every-time) |
 
 ---

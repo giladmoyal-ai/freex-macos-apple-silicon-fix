@@ -735,35 +735,49 @@ This applies in every app, so you never touch Paper Size again.
 lpstat -p
 ```
 
-You'll see something like `FreeX_Native_WiFi` — underscores, no spaces or brackets.
+You'll see something like `FreeX_Native_WiFi` — underscores, no spaces or brackets. **That exact
+string is what you type in the commands below**, in place of `<QUEUE>`.
 
-> **This trips everyone up.** `lpoptions -p "FreeX Printer (WiFi)"` fails with
-> *"Unable to get PPD file"*. You must use the internal name from `lpstat -p`.
+> ⚠️ **Two things trip people up here.**
+>
+> `<QUEUE>` is a placeholder — substitute your own name from `lpstat -p`. Pasting it literally gives
+> you `Unable to get PPD file for <QUEUE>`.
+>
+> And the **display name does not work**. `lpoptions -p "FreeX Printer (WiFi)"` fails the same way.
+> Only the underscored internal name works.
+
+Prefer not to copy by hand? This prints ready-to-run commands with your own queue names filled in:
+
+```bash
+for q in $(lpstat -v | sed -n 's/^device for \([^:]*\):.*/\1/p'); do
+  echo "lpoptions -p $q -l | grep -i PageSize"
+done
+```
 
 **Step 2: see the available sizes** (the `*` marks the current default):
 
 ```bash
-lpoptions -p YOUR_QUEUE_NAME -l | grep -i PageSize
+lpoptions -p <QUEUE> -l | grep -i PageSize
 ```
 
 **Step 3: set it.**
 
 ```bash
-lpoptions -p YOUR_QUEUE_NAME -o PageSize=w288h432      # true 4x6 inches
+lpoptions -p <QUEUE> -o PageSize=w288h432      # true 4x6 inches
 # or
-lpoptions -p YOUR_QUEUE_NAME -o PageSize=w283h425      # 100 x 150 mm
+lpoptions -p <QUEUE> -o PageSize=w283h425      # 100 x 150 mm
 ```
 
 **Step 4: confirm.**
 
 ```bash
-lpoptions -p YOUR_QUEUE_NAME | tr ' ' '\n' | grep -i pagesize
+lpoptions -p <QUEUE> -l | grep -i PageSize      # the * marks the active size
 ```
 
 To apply it for **every user** on the Mac rather than just you:
 
 ```bash
-sudo lpadmin -p YOUR_QUEUE_NAME -o PageSize=w288h432
+sudo lpadmin -p <QUEUE> -o PageSize=w288h432
 ```
 
 Quit and reopen the app afterwards — print dialogs cache the old size.
@@ -852,6 +866,7 @@ Full detail in **[docs/troubleshooting.md](docs/troubleshooting.md)**.
 | USB queue still errors after installing Rosetta | Stale queue created pre-Rosetta | Remove the printer, add it again |
 | Worked yesterday, dead today (Wi-Fi) | DHCP gave the printer a new IP | [Reserve the printer's IP on your router](docs/wifi-setup.md#stop-the-ip-address-from-changing) — the most common delayed failure |
 | Labels tiny, shifted, or on a huge blank page | App defaulted to Letter | Use a saved 4x6 preset |
+| Size or borders differ on **every** print | "Scale to Fit" is recalculating, or queue and app disagree on paper size | [Match the sizes and set Scale to 100%](docs/troubleshooting.md#labels-print-at-a-different-size-or-with-different-borders-every-time) |
 
 ---
 

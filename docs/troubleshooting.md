@@ -25,6 +25,7 @@ bash scripts/diagnose_freex_macos.sh --all
 - [My Wi-Fi queue stopped working](#my-wi-fi-queue-stopped-working)
 - [The queue I made before installing Rosetta still errors](#the-queue-i-made-before-installing-rosetta-still-errors)
 - [Labels print at the wrong size or on a huge blank page](#labels-print-at-the-wrong-size-or-on-a-huge-blank-page)
+- [Labels print at a different size or with different borders every time](#labels-print-at-a-different-size-or-with-different-borders-every-time)
 - [Nothing prints and there's no error at all](#nothing-prints-and-theres-no-error-at-all)
 - [The printer pauses itself after every job](#the-printer-pauses-itself-after-every-job)
 - [Printing broke after a macOS upgrade](#printing-broke-after-a-macos-upgrade)
@@ -241,6 +242,81 @@ Also check:
 - **Scale to Fit** is off
 - The physical roll matches the selected size, and the **gap sensor is calibrated** (the feed or
   calibration button on the printer)
+
+---
+
+## Labels print at a different size or with different borders every time
+
+Same file, same printer, but each print comes out shifted, scaled, or with
+margins that move. This is **not** the driver — it is macOS scaling your page to
+the paper, and recalculating that scale per document.
+
+### The cause
+
+Two settings conspire:
+
+**1. "Scale to Fit" is on.** In the print dialog, *Scale to Fit* asks macOS to
+resize the page to the paper. It recomputes a percentage for every document, so
+one label prints at 100% and the next at 165%. Preview's saved settings show it
+plainly:
+
+```
+com.apple.print.PageToPaperMappingAllowScalingUp = 1
+```
+
+**2. The queue's paper size and the app's paper size disagree.** The driver
+offers two 4x6-ish sizes — `w283h425` (100 x 150 mm) and `w288h432` (4.00 x 6.00
+in). If the queue defaults to one and the print dialog uses the other, macOS
+inserts a scaling step to reconcile them, and the borders move.
+
+### The fix
+
+**Make the sizes agree, then turn scaling off.**
+
+Set the queue to the same size the app uses — for US shipping labels that is
+`w288h432`:
+
+```bash
+lpoptions -p <QUEUE> -o PageSize=w288h432
+```
+
+Then in the print dialog:
+
+1. **Paper Size** -> `4.00x6.00"`
+2. Click the **Scale:** radio button — **not** *Scale to Fit*
+3. Enter **100**
+4. **Presets** -> **Save Current Settings as Preset...**, name it `FreeX 4x6`,
+   and choose **Only this printer**
+
+USPS, UPS and Amazon labels are already exactly 4 x 6 inches. Paper at 4x6 plus
+scale at 100% means **no scaling happens at all** — byte-identical output every
+time.
+
+### Delete old presets
+
+A preset saved earlier carries the old scale-up setting with it, so picking it
+brings the problem back. **Presets -> Edit Preset List** and delete any leftovers
+(`Job Preset`, `Job Preset 2`, and similar auto-generated names).
+
+### Printing that cannot drift
+
+The print dialog will always be somewhere a stray click changes your output. For
+a shipping workflow, printing from Terminal has no such surface:
+
+```bash
+lp -d <QUEUE> -o media=w288h432 -o fit-to-page=false label.pdf
+```
+
+Identical output every run, no dialog involved.
+
+### Still moving?
+
+- Check the label PDF really is 4x6. A Letter-size PDF with a label in the
+  corner will be scaled no matter what you set.
+- **Auto Rotate** can flip a page whose width and height are close. Turn it off.
+- If your label stock is genuinely 100 x 150 mm rather than 4 x 6 inches, use
+  `w283h425` everywhere instead — the rule is that the sizes must *match*, not
+  which one you pick.
 
 ---
 

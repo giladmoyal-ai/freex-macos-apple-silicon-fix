@@ -19,7 +19,7 @@ All IP addresses and network names below are **placeholders**. Substitute your o
 
 ## Before you start
 
-- **The printer is 2.4 GHz only.** It cannot join a 5 GHz or 6 GHz network. If your router
+- **The printer joins 2.4 GHz networks only.** The wireless module does not support 5 GHz or 6 GHz. If your router
   broadcasts one merged name across bands, this is the most common reason setup fails. Either
   temporarily split the bands, or use a router feature that lets a device bind to 2.4 GHz.
 - **Connect the printer by USB first.** The FreeX WiFi Toolbox configures the printer's wireless
@@ -59,7 +59,9 @@ Then **Apply** / **Set**.
 
 ## Step 2 — Configure the network settings
 
-Go to **FreeX Setup → Ethernet** (this page covers the printer's IP stack, wired or wireless):
+Go to **FreeX Setup → Ethernet**. Despite the name, on a Wi-Fi model this page configures the
+printer's **IP settings** — it is not about a wired Ethernet port, and the FreeX WiFi model does not
+have one:
 
 | Field | Value |
 | --- | --- |

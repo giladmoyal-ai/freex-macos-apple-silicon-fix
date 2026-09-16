@@ -48,6 +48,7 @@ FreeX; the diagnosis and fix are vendor-neutral. See [Other printers](docs/other
 - [Why this happens](#why-this-happens)
 - [Diagnose it yourself](#diagnose-it-yourself)
 - [The full fix](#the-full-fix)
+- [Which connection are you using?](#which-connection-are-you-using)
 - [USB setup](#usb-setup)
 - [Wi-Fi setup](#wi-fi-setup)
 - [Add a Wi-Fi printer on macOS](#add-a-wi-fi-printer-on-macos)
@@ -56,6 +57,7 @@ FreeX; the diagnosis and fix are vendor-neutral. See [Other printers](docs/other
 - [Troubleshooting](#troubleshooting)
 - [FAQ](#faq)
 - [Technical notes](#technical-notes)
+- [How this guide was verified](#how-this-guide-was-verified)
 - [Disclaimer](#disclaimer)
 
 ---
@@ -185,7 +187,7 @@ driver is made of.
 ## Quick fix (5 minutes)
 
 **1. Install the current driver software** for your printer, from the **manufacturer's official
-download page**. (FreeX users: see [Getting the FreeX software](#getting-the-freex-software).)
+download page**. (FreeX users: see [Official FreeX downloads and resources](#official-freex-downloads-and-resources).)
 
 **2. Install Rosetta 2.** Open Terminal and run:
 
@@ -387,20 +389,87 @@ Print a real label or test page. USB and Wi-Fi should both work now.
 
 ---
 
-## Getting the FreeX software
+## Official FreeX downloads and resources
 
 This repository **does not** redistribute FreeX software, drivers, firmware, or binaries — those are
-proprietary. Download the Mac driver and WiFi Toolbox **only from FreeX's official website or the
-support link supplied with your printer**.
+proprietary. Get them from FreeX directly:
 
-The package this guide was written against was named along the lines of
-`MacOS_FreeX_Driver_WiFi-Toolbox_v1.3` and contained:
+| Resource | Link |
+| --- | --- |
+| FreeX official site | <https://getfreex.com> |
+| **macOS driver + WiFi Toolbox** (and FreeX's own macOS setup guide) | <https://getfreex.com/pages/how-to-print-thermal-labels-via-usb-on-macos> |
+| Windows driver + setup guide | <https://getfreex.com/pages/how-to-print-thermal-labels-via-usb-on-windows-10> |
+| After-sales FAQ — firmware, character library, troubleshooting | <https://getfreex.com/pages/freex-thermal-label-printer-faq-after-sales> |
+| FreeX support | `cs@getfreex.com` |
 
-- a **driver `.pkg`** — installs the PPD and the `rastertoFreeX` CUPS filter
-- a **WiFi Toolbox `.app`** — configures the printer's wireless and network settings
+At the time of writing, FreeX hosts the actual download files on Google Drive and Zoho WorkDrive
+mirrors linked from those pages. Always start from the FreeX page rather than a saved mirror link, so
+you get the current version.
 
-Never take printer drivers or firmware from third-party "driver download" sites. Bad firmware can
-permanently ruin a thermal printer.
+### The macOS package
+
+The package this guide was written against is `MacOS_FreeX_Driver_WiFi-Toolbox_v1.3`, containing:
+
+- **`FreeX Driver for MacOS v1.3.pkg`** — installs the PPD (`FreeX.ppd.gz`) and the CUPS filter
+  (`rastertoFreeX`). This is the component that is Intel-only.
+- **`FreeX WiFi Toolbox for MacOS v1.3.app`** — configures the printer's wireless and network
+  settings. This app is **not** affected by the Rosetta problem, which is why it keeps working while
+  printing fails.
+
+### Which models this applies to
+
+FreeX's macOS guide covers the **FreeX WiFi** and **FreeX USB** models. The newer **FreeX WiFiMAX**
+is a different product that FreeX documents separately — if you have that model, follow FreeX's own
+instructions first, then come back here if you still hit `Filter failed`.
+
+> **Note:** FreeX's own macOS page does not currently mention Apple Silicon, M1/M2/M3/M4, or
+> Rosetta 2 — which is a large part of why this problem is so hard to solve from the official
+> documentation alone.
+
+### A word on firmware
+
+FreeX publishes firmware and character-library updates on the after-sales FAQ page linked above.
+**This guide never requires a firmware update**, and we deliberately don't link firmware files
+directly: a flash interrupted by a power loss, or the wrong file for your serial-number range, can
+permanently ruin a thermal printer. If you genuinely need firmware, get it from that page, match your
+serial range carefully, and follow FreeX's instructions.
+
+Never take FreeX drivers or firmware from third-party "driver download" sites.
+
+---
+
+## Which connection are you using?
+
+There are three ways to connect a label printer, and it's worth being clear which one you have,
+because the setup differs but **the Rosetta fix is identical for all three**.
+
+| Connection | How the printer attaches | macOS setup |
+| --- | --- | --- |
+| **USB** | Cable straight to the Mac | Add from the **Default** tab — [USB setup](#usb-setup) |
+| **Wi-Fi (wireless LAN)** | Printer joins your 2.4 GHz network | Configure via Toolbox, then add by **IP** — [Wi-Fi setup](#wi-fi-setup) |
+| **Wired Ethernet (wired LAN)** | RJ45 cable to your router or switch | Add by **IP**, exactly like Wi-Fi — [see below](#wired-ethernet-lan) |
+
+The **FreeX WiFi** model covered by this guide connects over **USB and Wi-Fi**. It has no Ethernet
+port, so the wired path doesn't apply to it — but it does apply to plenty of other label printers,
+and the macOS steps are the same.
+
+### Wired Ethernet (LAN)
+
+If your printer has an RJ45 port, plug it into your router or switch and it will normally pick up an
+IP address by DHCP. From there, **macOS treats wired and wireless network printers identically** —
+both are raw TCP printing on port 9100:
+
+1. Find the printer's IP (print a self-test/configuration label, or check your router's client list)
+2. Confirm your Mac can reach it: `nc -vz 192.168.1.100 9100`
+3. Add it via **Add Printer → IP** with Protocol **HP Jetdirect – Socket** —
+   [full steps](#add-a-wi-fi-printer-on-macos)
+
+Everything in [Add a Wi-Fi printer on macOS](#add-a-wi-fi-printer-on-macos), the port 9100 tests, and
+the DHCP-reservation advice applies unchanged to a wired connection. The only part that's
+Wi-Fi-specific is configuring the wireless credentials in the Toolbox.
+
+> **"Wi-Fi" and "LAN" both mean network printing here.** Wi-Fi is a wireless LAN; Ethernet is a wired
+> LAN. Once the printer has an IP address, macOS doesn't care how it got there.
 
 ---
 
@@ -756,6 +825,40 @@ this can list more confirmed cases.
 addresses, no printer serial numbers, no shipping labels, no customer names or addresses, no order or
 tracking numbers. Use placeholders like `YOUR_WIFI_NAME`, `192.168.1.100`, and `YOUR_MAC_USERNAME`,
 and redact log excerpts before posting.
+
+---
+
+## How this guide was verified
+
+This guide comes from fixing a real FreeX WiFi Thermal Label Printer on a MacBook Air (Apple M4,
+macOS 27.0) that was failing with both error messages. Being explicit about what that does and
+doesn't establish:
+
+**Verified directly on the affected Mac** — these are quoted from real output, not reconstructed:
+
+- `rastertoFreeX` reports as `Mach-O 64-bit executable x86_64` (Intel-only, no arm64 slice)
+- The PPD's filter line is exactly `*cupsFilter: "application/vnd.cups-raster 0 rastertoFreeX"`
+- `/var/log/cups/error_log` contained `err:86, Bad CPU type in executable`,
+  `STATE: +com.apple.badarch-error`, and `stopped with status 186`
+- After installing Rosetta 2, `arch -x86_64 /usr/libexec/cups/filter/rastertoFreeX` returns
+  `ERROR: rastertoepson job-id user title copies options [file]`
+- `w283h425` is the PPD's `*DefaultPageSize` and is defined as `100mmx150mm`
+- The driver's display name is exactly `FreeX WiFi Thermal Printer`
+- The TSPL command strings quoted in [technical notes](docs/technical-notes.md) are from the binary
+- The last `badarch` error was logged roughly 50 minutes **before** the USB and network queues were
+  recreated; both have been idle, enabled, and error-free since
+
+**Observed once, on one printer and one network** — correct for that setup, but not independently
+confirmed across models or firmware versions:
+
+- The specific FreeX WiFi Toolbox field values (Mode `STA`, `WPA-PSK/WPA2-PSK`, `WPA2-PSK`, `AES`,
+  DHCP `Enable`, Port `9100`)
+- That the printer prints a configuration label showing its IP, network, and port after a restart
+- The exact wording and layout of Toolbox screens, which vary between versions
+
+If something differs on your setup, that's useful — please
+[open an issue](https://github.com/giladmoyal-ai/freex-macos-apple-silicon-fix/issues) so this can be
+corrected.
 
 ---
 

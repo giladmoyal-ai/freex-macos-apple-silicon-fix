@@ -59,6 +59,17 @@ file /usr/libexec/cups/filter/* | grep -i x86_64 | grep -vi arm64     # any hit 
   for Intel-only binaries, checks for Rosetta 2, lists printer queues, and prints a recommended next
   step. Installs nothing and changes no settings.
 
+## Official vendor resources
+
+- FreeX official site: https://getfreex.com
+- macOS driver and WiFi Toolbox download plus FreeX's own macOS setup guide:
+  https://getfreex.com/pages/how-to-print-thermal-labels-via-usb-on-macos
+- After-sales FAQ, firmware and character library:
+  https://getfreex.com/pages/freex-thermal-label-printer-faq-after-sales
+- Applies to the FreeX WiFi and FreeX USB models; FreeX WiFiMAX is a separate, newer product.
+- FreeX's own macOS documentation does not mention Apple Silicon, M1/M2/M3/M4, or Rosetta 2, which
+  is why this failure is hard to resolve from official sources alone.
+
 ## Notes
 
 - Independent community guide. Not affiliated with or endorsed by FreeX, Apple, or any printer

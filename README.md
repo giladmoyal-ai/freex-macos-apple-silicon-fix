@@ -601,9 +601,15 @@ Wi-Fi-specific is configuring the wireless credentials in the Toolbox.
 5. Pick your printer's driver — for FreeX, **FreeX WiFi Thermal Printer**.
 6. Click **Add**.
 
-![The Printer Software window with "free" typed in the search box and FreeX WiFi Thermal Printer selected](docs/images/select-printer-software.png)
+![The macOS Printer Software window listing installed printer drivers including DYMO Label Printer, Epson, FreeX WiFi Thermal Printer, HP, Oki and Zebra](docs/images/printer-software-list.png)
 
-*Step 5 is the one people skip. Search `free`, select **FreeX WiFi Thermal Printer**, click OK.*
+*The installed driver list. **FreeX WiFi Thermal Printer** sits between Epson and HP. If it isn't
+listed at all, the driver package didn't install — run the `.pkg` again before going further.*
+
+![The Printer Software window with FreeX typed into the filter box, narrowing the list to FreeX WiFi Thermal Printer](docs/images/select-printer-software.png)
+
+*Faster: type `FreeX` in the filter box, select it, click **OK**. This is the step people skip — and
+skipping it is what leaves macOS on a generic driver.*
 
 **Do not accept a generic driver.** If macOS auto-fills *Generic PostScript Printer* or *Generic PCL
 Printer*, change it. A thermal label printer understands neither PostScript nor PCL, and a generic

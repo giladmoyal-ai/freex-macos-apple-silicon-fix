@@ -14,9 +14,14 @@ fix it properly over USB and Wi-Fi, and what to do when Rosetta 2 goes away.
 ![Apple Silicon](https://img.shields.io/badge/Apple%20Silicon-M1%20%C2%B7%20M2%20%C2%B7%20M3%20%C2%B7%20M4-black)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
-> **⏳ This fix has an expiry date.** macOS 27 is the **last** release with full Rosetta 2. From
-> macOS 28 onward Apple limits Rosetta to legacy game frameworks — general-purpose Intel binaries,
-> **including printer drivers**, stop running. See [The Rosetta 2 deadline](#the-rosetta-2-deadline).
+> **⏳ Rosetta 2 is going away — and there's a permanent fix here too.**
+> macOS 27 is the **last** release with full Rosetta 2. From macOS 28, Intel-only printer drivers
+> stop running altogether.
+>
+> This repository also ships **[a native replacement driver](native-filter/)** — a script with no CPU
+> architecture, so it can never hit this problem. It's verified printing real 4x6 shipping labels
+> over USB and Wi-Fi. Use Rosetta today; switch to the native filter whenever you like, and
+> definitely before macOS 28. See [The Rosetta 2 deadline](#the-rosetta-2-deadline).
 
 **Applies to:** FreeX WiFi Thermal Label Printers and **any** printer whose macOS driver ships an
 Intel-only CUPS filter — commonly budget 4x6 thermal shipping-label printers. Worked example uses
@@ -44,6 +49,7 @@ FreeX; the diagnosis and fix are vendor-neutral. See [Other printers](docs/other
 - [Not technical? Start here](#not-technical-start-here)
 - [Does this apply to me?](#does-this-apply-to-me)
 - [Symptoms](#symptoms)
+- [Two ways to fix it](#two-ways-to-fix-it)
 - [Don't trust the "Intel-based Apps" screen](#dont-trust-the-intel-based-apps-screen)
 - [Quick fix (5 minutes)](#quick-fix-5-minutes)
 - [Why this happens](#why-this-happens)
@@ -193,6 +199,21 @@ component.
 This is not a broken download, not a bad USB cable, not a firmware problem, not a macOS bug, and not
 a defective printer. Nothing is corrupt. Your Mac simply cannot execute the kind of program the
 driver is made of.
+
+---
+
+## Two ways to fix it
+
+| | [Install Rosetta 2](#quick-fix-5-minutes) | [Install the native filter](native-filter/) |
+| --- | --- | --- |
+| Time | 5 minutes | 10 minutes |
+| What it does | lets macOS run FreeX's Intel driver | replaces it with an architecture-free one |
+| Uses the vendor's driver | yes | no — installs alongside it, nothing removed |
+| Works on macOS 28+ | ❌ no | ✅ yes |
+| Maturity | the well-travelled path | newer, verified on USB and Wi-Fi |
+
+Both are reversible and they can coexist. If you just want to print today, start with Rosetta. If you
+want this solved permanently, go straight to the native filter.
 
 ---
 

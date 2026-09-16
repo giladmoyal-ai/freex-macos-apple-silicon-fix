@@ -125,3 +125,50 @@
   ]
 }
 </script>
+
+<!--
+  giscus: reader comments backed by this repository's GitHub Discussions (Q&A category).
+
+  Injected here rather than by overriding the theme's _layouts/default.html, so the
+  site keeps tracking the upstream Cayman theme with nothing to re-sync when it
+  updates. The widget is lazy-loaded and appended just above the site footer.
+-->
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    var main = document.querySelector(".main-content");
+    if (!main || document.getElementById("comments")) return;
+
+    var section = document.createElement("section");
+    section.id = "comments";
+    section.innerHTML =
+      '<hr>' +
+      '<h2>Questions and comments</h2>' +
+      '<p>Did this fix your printer, or is something still not working? Ask below &mdash; ' +
+      'answers stay on this page so the next person with the same error finds them. ' +
+      'Reports from <strong>non-FreeX printers</strong> are especially welcome.</p>' +
+      '<p><em>Please don\'t post private information:</em> no Wi-Fi names or passwords, no local ' +
+      'IP addresses, no printer serial numbers, and no shipping or customer data. ' +
+      'Commenting uses a free GitHub account.</p>';
+
+    var s = document.createElement("script");
+    s.src = "https://giscus.app/client.js";
+    s.setAttribute("data-repo", "giladmoyal-ai/freex-macos-apple-silicon-fix");
+    s.setAttribute("data-repo-id", "R_kgDOUdXgrg");
+    s.setAttribute("data-category", "Q&A");
+    s.setAttribute("data-category-id", "DIC_kwDOUdXgrs4DFvb2");
+    s.setAttribute("data-mapping", "pathname");
+    s.setAttribute("data-strict", "1");
+    s.setAttribute("data-reactions-enabled", "1");
+    s.setAttribute("data-emit-metadata", "0");
+    s.setAttribute("data-input-position", "top");
+    s.setAttribute("data-theme", "light");
+    s.setAttribute("data-lang", "en");
+    s.setAttribute("data-loading", "lazy");
+    s.crossOrigin = "anonymous";
+    s.async = true;
+    section.appendChild(s);
+
+    var footer = main.querySelector(".site-footer");
+    if (footer) { main.insertBefore(section, footer); } else { main.appendChild(section); }
+  });
+</script>

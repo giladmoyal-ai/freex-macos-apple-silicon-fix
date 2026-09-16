@@ -18,7 +18,7 @@ description: >-
 theme: jekyll-theme-cayman
 lang: en
 
+# llms.txt must be SERVED at the site root - it exists so AI tools can find a
+# structured summary of the guide. Excluding it defeats the point.
 exclude:
-  - scripts/
   - LICENSE
-  - llms.txt
